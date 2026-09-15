@@ -7,5 +7,5 @@ Ideon is a web platform designed to help people turn their ideas into reality. P
   * Mišelė Ralf - misele-ra
   * Arijus Rasymas - oArijus
   * Paulius Radzišauskas - PauliusRd
-  * Madina Tanyrbergenova - madinasejsengazykyzy-debag (Team leader)
+  * Madina Tanyrbergenova - madinasejsengazykyzy-debug (Team leader)
   * Aleksandr Samonov - gentelmanltrus (Backend)
