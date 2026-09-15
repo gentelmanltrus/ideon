@@ -21,3 +21,4 @@ Amina opens Ideon, discovers ideas from other users, and creates a post: “Imag
 
 **Result:** Amina turns a simple idea into a validated concept with community feedback and potential collaborators.
 
+.
