@@ -10,8 +10,27 @@ Ideon is a web platform designed to help people turn their ideas into reality. P
   * Madina Tanyrbergenova - madinasejsengazykyzy-debug (Team leader)
   * Aleksandr Samonov - gentelmanltrus (Backend)
  
-# Technology
+# Technology Stack
 
+**Frontend:**
+ * React - great framework for developing frontend based on JS
+
+**Backend:**
+ * ASP.NET Core Web API - free, cross platform open source framework, essential for creating web application
+ * C# - virtual machine based language ideal for web development
+
+**Database:**
+ * PostgreSQL - useful tool for organizing database
+
+**Version Control:**
+ * Git
+ * GitHub
+
+**Development:**
+ * VS Code - great multi language IDE integrated with Github
+
+**API Testing:**
+ * Swagger - great tool to see how web app works on localhost
 
 
 
@@ -21,4 +40,3 @@ Amina opens Ideon, discovers ideas from other users, and creates a post: “Imag
 
 **Result:** Amina turns a simple idea into a validated concept with community feedback and potential collaborators.
 
-.
