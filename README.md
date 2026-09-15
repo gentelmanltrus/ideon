@@ -42,4 +42,4 @@ Amina opens Ideon, discovers ideas from other users, and creates a post: “Imag
 
 **Roadmap:**
 
-[Roadmap] (https://github.com/gentelmanltrus/ideon/blob/main/docs/roadmap.md) 
+[Roadmap](https://github.com/gentelmanltrus/ideon/blob/main/docs/roadmap.md) 
