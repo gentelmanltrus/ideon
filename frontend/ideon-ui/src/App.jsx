@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import { Routes, Route, useNavigate } from 'react-router-dom'
 import './App.css'
 import { validateLoginForm } from './components/validation'
+import MainPage from './MainPage'
 
-function App() {
+function LoginForm() {
   const [formData, setFormData] = useState({ username: '', password: '' })
   const [errors, setErrors] = useState({})
+  const navigate = useNavigate()
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -24,6 +27,7 @@ function App() {
     }
     else {
       console.log('Form submitted successfully:', formData)
+      navigate('/main')
     }
   }
 
@@ -63,6 +67,15 @@ function App() {
         </form>
       </main>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<LoginForm />} />
+      <Route path="/main" element={<MainPage />} />
+    </Routes>
   )
 }
 
