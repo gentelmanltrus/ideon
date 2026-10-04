@@ -59,7 +59,7 @@ function App() {
             {errors.password && <span className="error">{errors.password}</span>}
           </div>
 
-          <button type="submit">Submit</button>
+          <button type="submit" className="button">Submit</button>
         </form>
       </main>
     </div>
