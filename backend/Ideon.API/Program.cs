@@ -5,7 +5,8 @@ using Ideon.API.Services.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
+// controller services are added to the dependency injection container, allowing them to be discovered and used by the application.
+builder.Services.AddControllers();
 //idea service added to the dependency injection container, allowing it to be injected into controllers and other services that require it.
 builder.Services.AddScoped<IIdeaService, IdeaService>();
 
@@ -41,6 +42,8 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+//app.MapGet("/ideas", async (IIdeaService ideaService) =>
+app.MapControllers();
 
 app.Run();
 
