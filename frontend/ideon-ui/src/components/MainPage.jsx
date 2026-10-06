@@ -16,7 +16,7 @@ const INITIAL_IDEAS = [
   }
 ]
 
-export default function MainFeed() {
+export default function MainPage() {
   const [searchParams] = useSearchParams()
   const activeCategory = searchParams.get('category') || 'all'
 
