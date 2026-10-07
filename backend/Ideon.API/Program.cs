@@ -9,7 +9,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 //idea service added to the dependency injection container, allowing it to be injected into controllers and other services that require it.
 builder.Services.AddScoped<IIdeaService, IdeaService>();
-
+builder.Services.AddScoped<ICategoryService, CategoryService>(); //category service added to the dependency injection container, allowing it to be injected into controllers and other services that require it.
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
