@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import '../styles/MainPage.css'
+import { getIdeas } from '../services/api'
 
 const INITIAL_IDEAS = [
   {
@@ -20,7 +21,26 @@ export default function MainPage() {
   const [searchParams] = useSearchParams()
   const activeCategory = searchParams.get('category') || 'all'
 
-  const [ideas, setIdeas] = useState(INITIAL_IDEAS)
+  // State variables to manage ideas, loading state, and error messages. useState is a React hook that allows us to add state to functional components. We initialize ideas with an empty array, loading with true (indicating that data is being fetched), and error with an empty string.
+  const [ideas, setIdeas] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  // useEffect is a React hook that allows us to perform side effects in functional components. In this case, we are using it to fetch ideas from the API when the component mounts. The empty dependency array [] means that this effect will only run once, similar to componentDidMount in class components.
+  useEffect(() => {
+  async function loadIdeas() {
+    try {
+      const data = await getIdeas()
+      setIdeas(data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  loadIdeas()
+}, [])
 
   const [newBody, setNewBody] = useState('')
   const [commentInputs, setCommentInputs] = useState({})
@@ -62,7 +82,14 @@ export default function MainPage() {
 
     setCommentInputs({ ...commentInputs, [ideaId]: '' })
   }
+  // Conditional rendering based on loading and error states. If loading is true, we display a loading message. If there is an error, we display the error message. Otherwise, we render the main content of the page.
+  if (loading) {
+  return <div className="feed-container">Loading ideas...</div>
+}
 
+if (error) {
+  return <div className="feed-container">Error: {error}</div>
+}
   return (
     <div className="feed-container">
       <header className="feed-header">
@@ -92,15 +119,15 @@ export default function MainPage() {
         {filteredIdeas.map((idea) => (
           <article key={idea.id} className="idea-card">
             <div className="idea-author-row">
-              <img src={idea.avatar} alt={idea.author} className="author-avatar" />
+              <img src={idea.avatar} alt={idea.authorUsername} className="author-avatar" />
               <div>
-                <h3 className="author-name">{idea.author}</h3>
-                <span className="post-time">{idea.timestamp} • <span className="post-cat">{idea.category}</span></span>
+                <h3 className="author-name">{idea.authorUsername}</h3>
+                <span className="post-time">{new Date(idea.createdAt).toLocaleDateString()} • <span className="post-cat">{idea.categoryName}</span></span>
               </div>
             </div>
 
             <div className="idea-content">
-              <p className="idea-body-text">{idea.body}</p>
+              <p className="idea-body-text">{idea.description}</p>
             </div>
 
             <div className="comments-section">
