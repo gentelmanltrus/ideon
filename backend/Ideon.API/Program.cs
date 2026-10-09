@@ -14,8 +14,21 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Add CORS policy to allow requests from the frontend application running on http://localhost:5173. cors is a security feature implemented by web browsers that restricts web pages from making requests to a different domain than the one that served the web page. By adding this CORS policy, the backend API allows requests from the specified frontend origin, enabling communication between the frontend and backend during development.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
+app.UseCors("Frontend");// Use the configured CORS policy for incoming requests, allowing requests from the specified frontend origin.
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
