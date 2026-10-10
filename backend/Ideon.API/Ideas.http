@@ -1,2 +1,6 @@
 //GET http://localhost:5104/api/ideas
-GET http://localhost:5104/api/categories
+GET http://localhost:5104/api/categories 
+//endpoints purpose is to retrieve all categories available in the system
+GET http://localhost:5104/api/ideas/{ideaId}/comments
+// endpoint to get all comments for a specific idea by its ID
+POST http://localhost:5104/api/ideas/{ideaId}/comments // endpoint to create a new comment for a specific idea by its ID
