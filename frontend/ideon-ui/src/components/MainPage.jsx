@@ -122,6 +122,8 @@ if (error) {
               <img src={idea.avatar} alt={idea.authorUsername} className="author-avatar" />
               <div>
                 <h3 className="author-name">{idea.authorUsername}</h3>
+                <Link to={`/ideas/${idea.id}`}>
+           </Link> //link to the idea details page
                 <span className="post-time">{new Date(idea.createdAt).toLocaleDateString()} • <span className="post-cat">{idea.categoryName}</span></span>
               </div>
             </div>
