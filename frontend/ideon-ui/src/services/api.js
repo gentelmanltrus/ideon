@@ -20,7 +20,16 @@ export async function getIdea(id) {
 
     return response.json();
 }
+// Function to fetch a single idea by its ID from the API. Similar to getIdeas, but it takes an id parameter and makes a GET request to the /ideas/:id endpoint. If the response is not ok, we throw an error. Otherwise, we return the JSON data from the response.
+export async function getIdeaById(id) {
+    const response = await fetch(`${API_URL}/ideas/${id}`);
 
+    if (!response.ok) {
+        throw new Error(`Failed to fetch idea: ${response.status}`);
+    }
+
+    return response.json();
+}
 
 // Function to fetch categories from the API. Similar to getIdeas, but it makes a GET request to the /categories endpoint. If the response is not ok, we throw an error. Otherwise, we return the JSON data from the response.
 export async function getCategories() {
