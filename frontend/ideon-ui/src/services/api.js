@@ -32,3 +32,24 @@ export async function getCategories() {
 
     return response.json();
 }
+// Function to create a new idea by sending a POST request to the API. It takes a data parameter, which is an object containing the idea's title, description, category ID, and whether it is looking for a builder. We use fetch to make a POST request to the /ideas endpoint, setting the Content-Type header to application/json and sending the data as a JSON string in the request body. If the response is not ok, we throw an error with the response message or status code. Otherwise, we return the JSON data from the response.
+
+export async function createIdea(data) {
+    const response = await fetch(`${API_URL}/ideas`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+        const message = await response.text();
+
+        throw new Error(
+            message || `Failed to create idea: ${response.status}`
+        );
+    }
+
+    return response.json();
+}

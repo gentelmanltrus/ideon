@@ -123,6 +123,7 @@ if (error) {
               <div>
                 <h3 className="author-name">{idea.authorUsername}</h3>
                 <Link to={`/ideas/${idea.id}`}>
+                <Link to="/ideas/new">Share an idea</Link>//link to the create idea page
            </Link> //link to the idea details page
                 <span className="post-time">{new Date(idea.createdAt).toLocaleDateString()} • <span className="post-cat">{idea.categoryName}</span></span>
               </div>
