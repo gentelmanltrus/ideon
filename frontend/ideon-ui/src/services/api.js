@@ -62,3 +62,39 @@ export async function createIdea(data) {
 
     return response.json();
 }
+// Function to fetch comments for a specific idea by its ID from the API. It takes an ideaId parameter and makes a GET request to the /ideas/:ideaId/comments endpoint. If the response is not ok, we throw an error with the response status code. Otherwise, we return the JSON data from the response.
+export async function getComments(ideaId) {
+    const response = await fetch(
+        `${API_URL}/ideas/${ideaId}/comments`
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            `Failed to fetch comments: ${response.status}`
+        );
+    }
+
+    return response.json();
+}
+// Function to create a new comment for a specific idea by sending a POST request to the API. It takes an ideaId parameter and a content parameter, which is the text of the comment. We use fetch to make a POST request to the /ideas/:ideaId/comments endpoint, setting the Content-Type header to application/json and sending the content as a JSON string in the request body. If the response is not ok, we throw an error with the response message or status code. Otherwise, we return the JSON data from the response.
+export async function createComment(ideaId, content) {
+    const response = await fetch(
+        `${API_URL}/ideas/${ideaId}/comments`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ content })
+        }
+    );
+
+    if (!response.ok) {
+        const message = await response.text();
+        throw new Error(
+            message || `Failed to create comment: ${response.status}`
+        );
+    }
+
+    return response.json();
+}
