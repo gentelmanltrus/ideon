@@ -1,90 +1,64 @@
-using System.Collections.Concurrent;
+
+using Ideon.API.DTOs.Comments;
+using Ideon.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ideon.API.Controllers;
-// <summary>
-// The CommentsController class handles HTTP requests related to comments, providing endpoints for CRUD operations.
+/// <summary>
+/// Controller for managing comments related to ideas.
+/// </summary>
 [ApiController]
-[Route("api/[controller]")]
-public sealed class CommentsController : ControllerBase
+[Route("api/ideas/{ideaId:int}/comments")]
+public class CommentsController : ControllerBase
 {
-	private static readonly ConcurrentDictionary<int, Comment> Comments = new();
-	private static int _nextId;
+    private readonly ICommentService _commentService;
 
-	[HttpGet]
-	public ActionResult<IEnumerable<Comment>> GetAll()
-	{
-		return Ok(Comments.Values.OrderBy(comment => comment.Id));
-	}
+    public CommentsController(ICommentService commentService)
+    {
+        _commentService = commentService;
+    }
 
-	[HttpGet("{id:int}")]
-	public ActionResult<Comment> GetById(int id)
-	{
-		return Comments.TryGetValue(id, out var comment) ? Ok(comment) : NotFound();
-	}
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<CommentResponseDto>>> GetAll(
+        int ideaId)
+    {
+        var comments =
+            await _commentService.GetByIdeaIdAsync(ideaId);
 
-	[HttpPost]
-	public ActionResult<Comment> Create([FromBody] CommentInput input)
-	{
-		if (string.IsNullOrWhiteSpace(input.Content))
-		{
-			return BadRequest("Comment content is required.");
-		}
+        return Ok(comments);
+    }
 
-		var comment = new Comment
-		{
-			Id = Interlocked.Increment(ref _nextId),
-			Content = input.Content.Trim(),
-			PostId = input.PostId,
-			UserId = input.UserId
-		};
+    [HttpPost]
+    public async Task<ActionResult<CommentResponseDto>> Create(
+        int ideaId,
+        CreateCommentDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Content))
+        {
+            return BadRequest("Comment content cannot be empty.");
+        }
 
-		Comments[comment.Id] = comment;
-		return CreatedAtAction(nameof(GetById), new { id = comment.Id }, comment);
-	}
+        if (dto.Content.Length > 1000)
+        {
+            return BadRequest("Comment cannot exceed 1000 characters.");
+        }
 
-	[HttpPut("{id:int}")]
-	public IActionResult Update(int id, [FromBody] CommentInput input)
-	{
-		if (string.IsNullOrWhiteSpace(input.Content))
-		{
-			return BadRequest("Comment content is required.");
-		}
+        try
+        {
+            var comment =
+                await _commentService.CreateAsync(ideaId, dto);
 
-		if (!Comments.TryGetValue(id, out var existing))
-		{
-			return NotFound();
-		}
+            if (comment is null)
+            {
+                return NotFound("Idea not found.");
+            }
 
-		var updated = new Comment
-		{
-			Id = id,
-			Content = input.Content.Trim(),
-			PostId = input.PostId,
-			UserId = input.UserId
-		};
-
-		return Comments.TryUpdate(id, updated, existing) ? NoContent() : Conflict();
-	}
-
-	[HttpDelete("{id:int}")]
-	public IActionResult Delete(int id)
-	{
-		return Comments.TryRemove(id, out _) ? NoContent() : NotFound();
-	}
-}
-
-public sealed class Comment
-{
-	public int Id { get; set; }
-	public string Content { get; set; } = string.Empty;
-	public int PostId { get; set; }
-	public int UserId { get; set; }
-}
-
-public sealed class CommentInput
-{
-	public string Content { get; set; } = string.Empty;
-	public int PostId { get; set; }
-	public int UserId { get; set; }
+            return Created($"/api/ideas/{ideaId}/comments/{comment.Id}",
+                comment);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
 }
