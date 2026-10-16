@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-
+using Ideon.API.Interfaces;
+using Ideon.API.Models;
 namespace Ideon.API.Controllers;
 // <summary>
 // Controller for managing ratings.
@@ -15,40 +16,35 @@ public sealed class RatingController : ControllerBase
 	}
 
 	[HttpGet]
-	public async Task<ActionResult<IReadOnlyCollection<RatingDto>>> GetAll(CancellationToken cancellationToken)
+	public async Task<ActionResult<IReadOnlyCollection<Rating>>> GetAll(CancellationToken cancellationToken)
 	{
-		return Ok(await _ratingService.GetAllAsync(cancellationToken));
+		return Ok(await _ratingService.GetRatingsAsync());
 	}
 
 	[HttpGet("{id:int}")]
-	public async Task<ActionResult<RatingDto>> GetById(int id, CancellationToken cancellationToken)
+	public async Task<ActionResult<Rating>> GetById(int id, CancellationToken cancellationToken)
 	{
-		var rating = await _ratingService.GetByIdAsync(id, cancellationToken);
+		var ratings = await _ratingService.GetRatingsAsync();
+		var rating = ratings.FirstOrDefault(rating => rating.Id == id);
 		return rating is null ? NotFound() : Ok(rating);
 	}
 
 	[HttpPost]
-	public async Task<ActionResult<RatingDto>> Create(
-		[FromBody] CreateRatingRequest request,
+	public async Task<ActionResult<Rating>> Create(
+		[FromBody] Rating request,
 		CancellationToken cancellationToken)
 	{
-		if (request.Score is < 1 or > 5)
-			return BadRequest("Score must be between 1 and 5.");
-
-		var rating = await _ratingService.CreateAsync(request, cancellationToken);
+		var rating = await _ratingService.CreateRatingAsync(request);
 		return CreatedAtAction(nameof(GetById), new { id = rating.Id }, rating);
 	}
 
 	[HttpPut("{id:int}")]
 	public async Task<IActionResult> Update(
 		int id,
-		[FromBody] UpdateRatingRequest request,
+		[FromBody] Rating request,
 		CancellationToken cancellationToken)
 	{
-		if (request.Score is < 1 or > 5)
-			return BadRequest("Score must be between 1 and 5.");
-
-		return await _ratingService.UpdateAsync(id, request, cancellationToken)
+		return await _ratingService.UpdateRatingAsync(id, request)
 			? NoContent()
 			: NotFound();
 	}
@@ -56,21 +52,8 @@ public sealed class RatingController : ControllerBase
 	[HttpDelete("{id:int}")]
 	public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
 	{
-		return await _ratingService.DeleteAsync(id, cancellationToken)
+		return await _ratingService.DeleteRatingAsync(id)
 			? NoContent()
 			: NotFound();
 	}
 }
-
-public interface IRatingService
-{
-	Task<IReadOnlyCollection<RatingDto>> GetAllAsync(CancellationToken cancellationToken);
-	Task<RatingDto?> GetByIdAsync(int id, CancellationToken cancellationToken);
-	Task<RatingDto> CreateAsync(CreateRatingRequest request, CancellationToken cancellationToken);
-	Task<bool> UpdateAsync(int id, UpdateRatingRequest request, CancellationToken cancellationToken);
-	Task<bool> DeleteAsync(int id, CancellationToken cancellationToken);
-}
-
-public sealed record RatingDto(int Id, int UserId, int TargetId, int Score, string? Comment);
-public sealed record CreateRatingRequest(int UserId, int TargetId, int Score, string? Comment);
-public sealed record UpdateRatingRequest(int UserId, int TargetId, int Score, string? Comment);

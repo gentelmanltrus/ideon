@@ -1,3 +1,4 @@
+using Ideon.API.Data;
 using Ideon.API.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,10 +8,10 @@ namespace Ideon.API.Interfaces;
 // </summary>
 public class RatingService : IRatingService
 {
-	private readonly DbContext _context;
+	private readonly AppDbContext _context;
 	private readonly DbSet<Rating> _ratings;
 
-	public RatingService(DbContext context)
+	public RatingService(AppDbContext context)
 	{
 		_context = context;
 		_ratings = context.Set<Rating>();
