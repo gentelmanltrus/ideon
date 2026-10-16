@@ -8,7 +8,11 @@ export default function IdeaDetails() {
     const [idea, setIdea] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-
+    const [comments, setComments] = useState([]);
+    const [commentText, setCommentText] = useState("");
+    const [commentsLoading, setCommentsLoading] = useState(false);
+    const [commentSubmitting, setCommentSubmitting] = useState(false);
+    const [commentsError, setCommentsError] = useState("");
     useEffect(() => {
         let cancelled = false;
 

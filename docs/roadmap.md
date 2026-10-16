@@ -51,8 +51,8 @@
 * [x] Create Comment entity
 * [x] Create CollaborationRequest entity
 * [x] Configure entity relationships
-* [ ] Implement DTOs
-* [ ] Implement services
+* [x] Implement DTOs
+* [x] Implement services
 * [ ] Implement repositories where needed
 * [ ] Implement REST API endpoints
 * [ ] Add validation
@@ -66,7 +66,7 @@
 * [ ] Create navigation
 * [x] Create home page
 * [ ] Create ideas list
-* [ ] Create idea details page
+* [x] Create idea details page
 * [ ] Create idea creation form
 * [ ] Create authentication pages
 * [ ] Create comments UI
