@@ -1,6 +1,7 @@
 using Ideon.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Ideon.API.Services;
+using Ideon.API.Interfaces;
 using Ideon.API.Services.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -11,6 +12,7 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IIdeaService, IdeaService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>(); //category service added to the dependency injection container, allowing it to be injected into controllers and other services that require it.
 builder.Services.AddScoped<ICommentService, CommentService>();//comment service added to the dependency injection container, allowing it to be injected into controllers and other services that require it.
+builder.Services.AddScoped<IRatingService, RatingService>();//rating service added to the dependency injection container, allowing it to be injected into controllers and other services that require it.
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
