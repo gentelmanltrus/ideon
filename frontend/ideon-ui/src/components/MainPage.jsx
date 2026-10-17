@@ -3,20 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom'
 import '../styles/MainPage.css'
 import { getIdeas } from '../services/api'
 
-const INITIAL_IDEAS = [
-  {
-    id: 1,
-    category: 'programming',
-    author: 'Alex R',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Alex',
-    timestamp: '2 hours ago',
-    body: 'Imagine a website where you can share ideas and others can try and make them!',
-    comments: [
-      { id: 101, author: 'Sarah T', text: 'Seems fun to do!' }
-    ]
-  }
-]
-
+// MainPage component that displays a list of ideas based on the selected category. It fetches ideas from the backend and allows users to post new ideas and comments.
 export default function MainPage() {
   const [searchParams] = useSearchParams()
   const activeCategory = searchParams.get('category') || 'all'
@@ -45,43 +32,14 @@ export default function MainPage() {
   const [newBody, setNewBody] = useState('')
   const [commentInputs, setCommentInputs] = useState({})
 
-  // if no category selected, defaults to all
-  const filteredIdeas = activeCategory === 'all' ? ideas: ideas.filter(item => item.category === activeCategory)
+  // filteredIdeas is a derived state that filters the ideas based on the active category. If the active category is 'all', it returns all ideas. Otherwise, it filters the ideas to only include those that match the selected category. This allows us to display only relevant ideas to the user based on their category selection.
+  const filteredIdeas =
+  activeCategory === "all"
+    ? ideas
+    : ideas.filter(
+        (idea) => idea.categoryId === Number(activeCategory)
+      );
 
-  const handlePostSubmit = (e) => {
-    e.preventDefault()
-    if (!newBody.trim()) return
-
-    const newIdeaObj = {
-      id: Date.now(),
-      category: activeCategory,
-      author: 'You',
-      avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=You',
-      timestamp: 'Just now',
-      body: newBody,
-      comments: []
-    }
-
-    setIdeas([newIdeaObj, ...ideas])
-    setNewBody('')
-  }
-
-  const handleAddComment = (ideaId) => {
-    const text = commentInputs[ideaId]
-    if (!text || !text.trim()) return
-
-    setIdeas(ideas.map(idea => {
-      if (idea.id === ideaId) {
-        return {
-          ...idea,
-          comments: [...idea.comments, { id: Date.now(), author: 'You', text }]
-        }
-      }
-      return idea
-    }))
-
-    setCommentInputs({ ...commentInputs, [ideaId]: '' })
-  }
   // Conditional rendering based on loading and error states. If loading is true, we display a loading message. If there is an error, we display the error message. Otherwise, we render the main content of the page.
   if (loading) {
   return <div className="feed-container">Loading ideas...</div>
