@@ -1,38 +1,76 @@
-import { useNavigate } from 'react-router-dom'
-import '../styles/CategorySelect.css'
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { getCategories } from "../services/api";
+import "../styles/CategorySelect.css";
 
-const CATEGORIES = [
-  { id: 'programming', name: 'Software & Web Apps'},
-  { id: 'gamedev', name: 'Game Development'},
-  { id: 'engineering', name: 'Hardware & Engineering'},
-  { id: 'art', name: 'Art & Design'}
-]
-
+//category select page, where the user can select a category to view ideas in that category
 export default function CategorySelect() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const handleSelect = (categoryId) => {
-    navigate(`/main?category=${categoryId}`)
-  }
+  const [categories, setCategories] = useState([]);//state for categories, loading and error
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
+  //fetch categories from the backend and set the state accordingly
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCategories() {
+      try {
+        const data = await getCategories();
+
+        if (!cancelled) {
+          setCategories(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadCategories();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  //render loading, error or the category select page
+  if (loading) return <p>Loading categories...</p>;
+  if (error) return <p role="alert">Could not load categories: {error}</p>;
+
+  //render the category select page with a grid of categories, each category is a button that navigates to the main page with the selected category as a query parameter
   return (
-    <div className="category-container">
+    <main className="category-container">
       <h1>Share your idea with the world!</h1>
       <h2>Please select a category</h2>
 
       <div className="category-grid">
-        {CATEGORIES.map((cat) => (
-          <div 
-            key={cat.id} 
+        {categories.map((category) => (
+          <button
+            type="button"
+            key={category.id}
             className="category-card"
-            onClick={() => handleSelect(cat.id)}
+            onClick={() =>
+              navigate(`/main?category=${category.id}`)
+            }
           >
-            <span className="icon">{cat.icon}</span>
-            <h3>{cat.name}</h3>
-            <p>{cat.desc}</p>
-          </div>
+            <h3>{category.name}</h3>
+          </button>
         ))}
       </div>
-    </div>
-  )
+
+      <p>
+        <Link to="/main">View all ideas</Link>
+      </p>
+      <p>
+        <Link to="/ideas/new">Create an idea</Link>
+      </p>
+    </main>
+  );
 }
