@@ -1,7 +1,40 @@
-GET http://localhost:5104/api/ideas
+@baseUrl = http://localhost:5104/api
 
-GET http://localhost:5104/api/categories 
-//endpoints purpose is to retrieve all categories available in the system
-GET http://localhost:5104/api/ideas/{ideaId}/comments
-// endpoint to get all comments for a specific idea by its ID
-POST http://localhost:5104/api/ideas/{ideaId}/comments // endpoint to create a new comment for a specific idea by its ID
+### Get categories
+GET {{baseUrl}}/categories
+
+### Get all ideas
+GET {{baseUrl}}/ideas
+
+### Get one idea
+GET {{baseUrl}}/ideas/1
+
+### Create an idea - current DTO
+# AuthorId must belong to an existing user.
+POST {{baseUrl}}/ideas
+Content-Type: application/json
+
+{
+  "title": "Alpha test idea",
+  "description": "Testing the Ideon end-to-end flow.",
+  "authorId": 1,
+  "categoryId": 1,
+  "lookingForBuilder": true
+}
+
+### Get comments for an idea
+GET {{baseUrl}}/ideas/1/comments
+
+### Create a comment - current DTO
+#current DTO requires all three fields.
+POST {{baseUrl}}/ideas/1/comments
+Content-Type: application/json
+
+{
+  "content": "This is a test comment.",
+  "ideaId": 1,
+  "authorId": 1
+}
+
+### Get ratings - current route
+GET {{baseUrl}}/rating
