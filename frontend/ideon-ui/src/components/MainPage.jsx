@@ -3,51 +3,43 @@ import { useSearchParams, Link } from 'react-router-dom'
 import '../styles/MainPage.css'
 import { getIdeas } from '../services/api'
 
-// MainPage component that displays a list of ideas based on the selected category. It fetches ideas from the backend and allows users to post new ideas and comments.
+// Displays ideas from the backend, filtered by the selected category.
 export default function MainPage() {
   const [searchParams] = useSearchParams()
   const activeCategory = searchParams.get('category') || 'all'
 
-  // State variables to manage ideas, loading state, and error messages. useState is a React hook that allows us to add state to functional components. We initialize ideas with an empty array, loading with true (indicating that data is being fetched), and error with an empty string.
   const [ideas, setIdeas] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
-  // useEffect is a React hook that allows us to perform side effects in functional components. In this case, we are using it to fetch ideas from the API when the component mounts. The empty dependency array [] means that this effect will only run once, similar to componentDidMount in class components.
+  // Fetch ideas from the backend when the component mounts.
   useEffect(() => {
-  async function loadIdeas() {
-    try {
-      const data = await getIdeas()
-      setIdeas(data)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
+    async function loadIdeas() {
+      try {
+        const data = await getIdeas()
+        setIdeas(data)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
     }
+
+    loadIdeas()
+  }, [])
+  // Filter ideas based on the selected category. If 'all' is selected, show all ideas; otherwise, filter by the selected category ID.
+  const filteredIdeas =
+    activeCategory === 'all'
+      ? ideas
+      : ideas.filter((idea) => idea.categoryId === Number(activeCategory))
+  // Render loading, error, or the main page with the list of ideas filtered by the selected category.
+  if (loading) {
+    return <div className="feed-container">Loading ideas...</div>
   }
 
-  loadIdeas()
-}, [])
+  if (error) {
+    return <div className="feed-container">Error: {error}</div>
+  }
 
-  const [newBody, setNewBody] = useState('')
-  const [commentInputs, setCommentInputs] = useState({})
-
-  // filteredIdeas is a derived state that filters the ideas based on the active category. If the active category is 'all', it returns all ideas. Otherwise, it filters the ideas to only include those that match the selected category. This allows us to display only relevant ideas to the user based on their category selection.
-  const filteredIdeas =
-  activeCategory === "all"
-    ? ideas
-    : ideas.filter(
-        (idea) => idea.categoryId === Number(activeCategory)
-      );
-
-  // Conditional rendering based on loading and error states. If loading is true, we display a loading message. If there is an error, we display the error message. Otherwise, we render the main content of the page.
-  if (loading) {
-  return <div className="feed-container">Loading ideas...</div>
-}
-
-if (error) {
-  return <div className="feed-container">Error: {error}</div>
-}
   return (
     <div className="feed-container">
       <header className="feed-header">
@@ -55,34 +47,23 @@ if (error) {
           <h2>Ideon</h2>
           <span className="category-badge">{activeCategory.toUpperCase()}</span>
         </div>
-        <Link to="/categories" className="change-category-btn">Change Category</Link>
+        <div className="header-actions">
+          <Link to="/ideas/new" className="create-idea-btn">Create an idea</Link>
+          <Link to="/categories" className="change-category-btn">Change Category</Link>
+        </div>
       </header>
-
-      <div className="post-box-card">
-        <div className="post-box-header">
-          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=You" alt="Avatar" className="user-avatar" />
-        </div>
-        <textarea
-          placeholder="Write your idea..."
-          value={newBody}
-          onChange={(e) => setNewBody(e.target.value)}
-          rows="3"
-        />
-        <div className="post-box-actions">
-          <button onClick={handlePostSubmit} className="post-btn">Share Idea</button>
-        </div>
-      </div>
 
       <div className="feed-list">
         {filteredIdeas.map((idea) => (
-          <article key={idea.id} className="idea-card">
+          <Link
+            key={idea.id}
+            to={`/ideas/${idea.id}`}
+            className="idea-card"
+          >
             <div className="idea-author-row">
               <img src={idea.avatar} alt={idea.authorUsername} className="author-avatar" />
               <div>
                 <h3 className="author-name">{idea.authorUsername}</h3>
-                <Link to={`/ideas/${idea.id}`}>
-                <Link to="/ideas/new">Share an idea</Link>//link to the create idea page
-           </Link> //link to the idea details page
                 <span className="post-time">{new Date(idea.createdAt).toLocaleDateString()} • <span className="post-cat">{idea.categoryName}</span></span>
               </div>
             </div>
@@ -90,30 +71,7 @@ if (error) {
             <div className="idea-content">
               <p className="idea-body-text">{idea.description}</p>
             </div>
-
-            <div className="comments-section">
-              <div className="comment-input-row">
-                <input 
-                  type="text" 
-                  placeholder="Evaluate or give advice on this idea..."
-                  value={commentInputs[idea.id] || ''}
-                  onChange={(e) => setCommentInputs({ ...commentInputs, [idea.id]: e.target.value })}
-                />
-                <button onClick={() => handleAddComment(idea.id)}>Comment</button>
-              </div>
-
-              {idea.comments.length > 0 && (
-                <div className="comments-list">
-                  {idea.comments.map(comment => (
-                    <div key={comment.id} className="comment-item">
-                      <strong>@{comment.author}: </strong>
-                      <span>{comment.text}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </article>
+          </Link>
         ))}
       </div>
     </div>
