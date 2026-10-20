@@ -1,100 +1,174 @@
-//summary: This file contains functions to interact with the API for fetching ideas and categories. It uses the fetch API to make HTTP requests and handles errors appropriately. The base URL for the API is defined at the top of the file.
-const API_URL = "http://localhost:5104/api";//Base URL for the API
-// Function to fetch ideas from the API. fetch is a built-in JavaScript function that makes HTTP requests. It returns a promise that resolves to the response of the request. In this case, we are making a GET request to the /ideas endpoint of the API. If the response is not ok (i.e., the status code is not in the range 200-299), we throw an error. Otherwise, we return the JSON data from the response.
-export async function getIdeas() {
-    const response = await fetch(`${API_URL}/ideas`);
-    //await - Waits for the fetch request to complete and returns the response object. 
-    if (!response.ok) {
-        throw new Error("Failed to fetch ideas");
+const API_URL = "http://localhost:5104/api";
+// This file contains functions for interacting with the backend API, including authentication, idea management, comments, ratings, and collaboration requests. It uses the Fetch API to make HTTP requests and handles token storage in localStorage.
+export function getToken() {
+    return localStorage.getItem("ideon_token");
+}//gets the authentication token from localStorage, which is used for making authenticated API requests.
+
+export function saveAuth(auth) {
+    localStorage.setItem("ideon_token", auth.token);
+    localStorage.setItem("ideon_user", JSON.stringify({
+        userId: auth.userId,
+        username: auth.username,
+        email: auth.email
+    }));
+}//saves the authentication token and user information to localStorage after a successful login or registration, allowing the application to persist the user's session across page reloads.
+
+export function clearAuth() {
+    localStorage.removeItem("ideon_token");
+    localStorage.removeItem("ideon_user");
+}//clears the authentication token and user information from localStorage, effectively logging the user out of the application.
+
+export function getCurrentUser() {
+    const raw = localStorage.getItem("ideon_user");
+
+    if (!raw) {
+        return null;
     }
 
-    return response.json();
-}
-// Function to fetch a single idea by its ID from the API. Similar to getIdeas, but it takes an id parameter and makes a GET request to the /ideas/:id endpoint. If the response is not ok, we throw an error. Otherwise, we return the JSON data from the response.
-export async function getIdea(id) {
-    const response = await fetch(`${API_URL}/ideas/${id}`);
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch idea");
+    try {
+        return JSON.parse(raw);
+    } catch {
+        return null;
     }
-
-    return response.json();
-}
-// Function to fetch a single idea by its ID from the API. Similar to getIdeas, but it takes an id parameter and makes a GET request to the /ideas/:id endpoint. If the response is not ok, we throw an error. Otherwise, we return the JSON data from the response.
-export async function getIdeaById(id) {
-    const response = await fetch(`${API_URL}/ideas/${id}`);
-
-    if (!response.ok) {
-        throw new Error(`Failed to fetch idea: ${response.status}`);
-    }
-
-    return response.json();
 }
 
-// Function to fetch categories from the API. Similar to getIdeas, but it makes a GET request to the /categories endpoint. If the response is not ok, we throw an error. Otherwise, we return the JSON data from the response.
-export async function getCategories() {
-    const response = await fetch(`${API_URL}/categories`);
+async function request(path, options = {}) {
+    const token = getToken();
 
-    if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-    }
+    const headers = {
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
 
-    return response.json();
-}
-// Function to create a new idea by sending a POST request to the API. It takes a data parameter, which is an object containing the idea's title, description, category ID, and whether it is looking for a builder. We use fetch to make a POST request to the /ideas endpoint, setting the Content-Type header to application/json and sending the data as a JSON string in the request body. If the response is not ok, we throw an error with the response message or status code. Otherwise, we return the JSON data from the response.
-
-export async function createIdea(data) {
-    const response = await fetch(`${API_URL}/ideas`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
+    const response = await fetch(`${API_URL}${path}`, {
+        ...options,
+        headers
     });
 
-    if (!response.ok) {
-        const message = await response.text();
-
-        throw new Error(
-            message || `Failed to create idea: ${response.status}`
-        );
+    if (response.status === 204) {
+        return null;
     }
 
-    return response.json();
-}
-// Function to fetch comments for a specific idea by its ID from the API. It takes an ideaId parameter and makes a GET request to the /ideas/:ideaId/comments endpoint. If the response is not ok, we throw an error with the response status code. Otherwise, we return the JSON data from the response.
-export async function getComments(ideaId) {
-    const response = await fetch(
-        `${API_URL}/ideas/${ideaId}/comments`
-    );
+    const text = await response.text();
 
-    if (!response.ok) {
-        throw new Error(
-            `Failed to fetch comments: ${response.status}`
-        );
-    }
+    let data = null;
 
-    return response.json();
-}
-// Function to create a new comment for a specific idea by sending a POST request to the API. It takes an ideaId parameter and a content parameter, which is the text of the comment. We use fetch to make a POST request to the /ideas/:ideaId/comments endpoint, setting the Content-Type header to application/json and sending the content as a JSON string in the request body. If the response is not ok, we throw an error with the response message or status code. Otherwise, we return the JSON data from the response.
-export async function createComment(ideaId, content) {
-    const response = await fetch(
-        `${API_URL}/ideas/${ideaId}/comments`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ content })
+    if (text) {
+        try {
+            data = JSON.parse(text);
+        } catch {
+            data = text;
         }
-    );
-
-    if (!response.ok) {
-        const message = await response.text();
-        throw new Error(
-            message || `Failed to create comment: ${response.status}`
-        );
     }
 
-    return response.json();
+    if (!response.ok) {
+        const message =
+            data?.message ||
+            data?.title ||
+            (typeof data === "string" ? data : null) ||
+            `Request failed: ${response.status}`;
+
+        if (response.status === 401) {
+            clearAuth();
+        }
+
+        throw new Error(message);
+    }
+
+    return data;
+}
+
+export async function register(data) {
+    return request("/auth/register", {
+        method: "POST",
+        body: JSON.stringify(data)
+    });
+}
+
+export async function login(data) {
+    return request("/auth/login", {
+        method: "POST",
+        body: JSON.stringify(data)
+    });
+}
+
+export async function getMe() {
+    return request("/auth/me");
+}
+
+export async function getIdeas() {
+    return request("/ideas");
+}
+
+export async function getIdea(id) {
+    return request(`/ideas/${id}`);
+}
+
+export async function getIdeaById(id) {
+    return getIdea(id);
+}
+
+export async function getCategories() {
+    return request("/categories");
+}
+
+export async function createIdea(data) {
+    return request("/ideas", {
+        method: "POST",
+        body: JSON.stringify(data)
+    });
+}
+
+export async function updateIdea(id, data) {
+    return request(`/ideas/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data)
+    });
+}
+
+export async function deleteIdea(id) {
+    return request(`/ideas/${id}`, {
+        method: "DELETE"
+    });
+}
+
+export async function getComments(ideaId) {
+    return request(`/ideas/${ideaId}/comments`);
+}
+
+export async function createComment(ideaId, content) {
+    return request(`/ideas/${ideaId}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ content })
+    });
+}
+
+export async function getRatings(ideaId) {
+    return request(`/ideas/${ideaId}/ratings`);
+}
+
+export async function createRating(ideaId, data) {
+    return request(`/ideas/${ideaId}/ratings`, {
+        method: "POST",
+        body: JSON.stringify(data)
+    });
+}
+
+export async function updateMyRating(ideaId, data) {
+    return request(`/ideas/${ideaId}/ratings/mine`, {
+        method: "PUT",
+        body: JSON.stringify(data)
+    });
+}
+
+export async function createCollaborationRequest(ideaId) {
+    return request(`/ideas/${ideaId}/collaboration-requests`, {
+        method: "POST",
+        body: JSON.stringify({})
+    });
+}
+
+export async function getMyCollaborationRequests() {
+    return request("/collaboration-requests/mine");
 }
