@@ -11,5 +11,6 @@ public interface ICommentService
 
     Task<CommentResponseDto?> CreateAsync(
         int ideaId,
+        int userId,
         CreateCommentDto dto);
 }
