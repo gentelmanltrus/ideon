@@ -1,118 +1,146 @@
-import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import { validateLoginForm } from './validation'
-
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { login, register, saveAuth } from "../services/api";
+// The LoginForm component provides a user interface for signing in or registering an account. It manages form state, handles form submission, and interacts with the backend API for authentication.
 export default function LoginForm() {
-  const [formData, setFormData] = useState({ username: '', password: '' })
-  const [isRegistering, setIsRegistering] = useState(false) 
-  const [errors, setErrors] = useState({})
-  const [serverError, setServerError] = useState('')
-  const navigate = useNavigate()
+    const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData({ ...formData, [name]: value })
+    const [isRegister, setIsRegister] = useState(false);
+    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: '' })
+    async function handleSubmit(event) {
+        event.preventDefault();
+        setError("");
+
+        if (!username.trim() || !password) {
+            setError("Username and password are required.");
+            return;
+        }
+
+        if (isRegister && !email.trim()) {
+            setError("Email is required.");
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            let auth;
+
+            if (isRegister) {
+                auth = await register({
+                    username: username.trim(),
+                    email: email.trim(),
+                    password
+                });
+            } else {
+                auth = await login({
+                    usernameOrEmail: username.trim(),
+                    password
+                });
+            }
+
+            saveAuth(auth);
+            navigate("/categories");
+        } catch (err) {
+            setError(err.message || "Authentication failed.");
+        } finally {
+            setLoading(false);
+        }
     }
-  }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setServerError('')
-    const validationErrors = validateLoginForm(formData)
+    return (
+        <div className="AppContainer">
+            <header>
+                <h1>Ideon</h1>
+            </header>
 
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
-      return
-    }
+            <main>
+                <p className="tagline">Make your ideas a reality</p>
 
-    //  Dynamically pick endpoint based on mode
-    const endpoint = isRegistering 
-      ? 'http://localhost:5104/api/auth/register' 
-      : 'http://localhost:5104/api/auth/login'
+                <h2>{isRegister ? "Create an account" : "Sign in"}</h2>
 
-try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
+                <form onSubmit={handleSubmit}>
+                    <div>
+                        <label htmlFor="username">
+                            {isRegister ? "Username" : "Username or email"}
+                        </label>
 
-      // Parses JSON or handles text errors
-      const isJson = response.headers.get('content-type')?.includes('application/json')
-      const data = isJson ? await response.json() : null
+                        <input
+                            id="username"
+                            name="username"
+                            type="text"
+                            autoComplete="username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                        />
+                    </div>
 
-      if (!response.ok) {
-        throw new Error(data?.message || `Server error (${response.status}). Check your dotnet console.`)
-      }
+                    {isRegister && (
+                        <div>
+                            <label htmlFor="email">Email</label>
 
-      // Saves user info in localStorage
-      localStorage.setItem('ideon_user', JSON.stringify(data))
-      localStorage.setItem('isAuthenticated', 'true')
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                autoComplete="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+                        </div>
+                    )}
 
-      navigate('/categories')
-    } catch (err) {
-      setServerError(err.message || 'Failed to authenticate.')
-    }
-  }
+                    <div>
+                        <label htmlFor="password">Password</label>
 
-  return (
-    <div className="AppContainer">
-      <header>
-        <h1>Ideon</h1>
-      </header>
-      <main>
-        <p className="tagline">
-          {isRegistering ? 'Create your new account' : 'Make your ideas a reality'}
-        </p>
-        <form onSubmit={handleSubmit}>
-          <div>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              placeholder="Username"
-              value={formData.username}
-              onChange={handleChange}
-            />
-            {errors.username && <span className="error">{errors.username}</span>}
-          </div>
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            autoComplete={
+                                isRegister ? "new-password" : "current-password"
+                            }
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            minLength={isRegister ? 8 : undefined}
+                            required
+                        />
+                    </div>
 
-          <div>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-            />
-            {errors.password && <span className="error">{errors.password}</span>}
-          </div>
+                    {error && <p role="alert">{error}</p>}
 
-          {serverError && <p className="error" role="alert">{serverError}</p>}
+                    <button type="submit" disabled={loading}>
+                        {loading
+                            ? "Please wait..."
+                            : isRegister
+                                ? "Register"
+                                : "Sign in"}
+                    </button>
+                </form>
 
-          <button type="submit" className="button">
-            {isRegistering ? 'Sign Up' : 'Log In'}
-          </button>
-        </form>
+                <p>
+                    {isRegister
+                        ? "Already have an account?"
+                        : "Don't have an account?"}{" "}
 
-        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-          <button 
-            type="button" 
-            className="link-button" 
-            onClick={() => {
-              setIsRegistering(!isRegistering)
-              setServerError('')
-            }}
-            style={{ background: 'none', border: 'none', color: '#0070f3', cursor: 'pointer'}}
-          >
-            {isRegistering ? 'Already have an account? Log In' : "Don't have an account? Sign Up"}
-          </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setIsRegister(!isRegister);
+                            setError("");
+                        }}
+                    >
+                        {isRegister ? "Sign in" : "Register"}
+                    </button>
+                </p>
+            </main>
         </div>
-      </main>
-    </div>
-  )
+    );
 }
