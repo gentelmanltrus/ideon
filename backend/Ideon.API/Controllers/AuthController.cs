@@ -1,91 +1,78 @@
+using System.Security.Claims;
+using Ideon.API.DTOs.Auth;
+using Ideon.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Ideon.API.Data;
-using Ideon.API.Models;
 
 namespace Ideon.API.Controllers;
-
-// <summary>
-// The AuthController class handles HTTP requests related to user authentication and registration.
-
+/// <summary>
+/// Controller responsible for handling authentication-related endpoints.
 [ApiController]
 [Route("api/auth")]
+//this class is responsible for handling authentication-related endpoints, such as user registration, login, and retrieving the current user's information. It uses the IAuthService to perform the actual authentication logic.
 public class AuthController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly IAuthService _authService;
 
-    public AuthController(AppDbContext context)
+    public AuthController(IAuthService authService)
     {
-        _context = context;
+        _authService = authService;
     }
 
-    // Registers a new user account
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+    [AllowAnonymous]
+    public async Task<ActionResult<AuthResponseDto>> Register(
+        RegisterDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
+        var result = await _authService.RegisterAsync(dto);
+
+        if (result is null)
         {
-            return BadRequest(new { message = "Username and password are required." });
+            return Conflict(new
+            {
+                message = "Username or email is already registered."
+            });
         }
 
-        // Check if username is already taken
-        var existingUser = await _context.Users.AnyAsync(u => u.Username.ToLower() == dto.Username.ToLower().Trim());
-        if (existingUser)
-        {
-            return BadRequest(new { message = "Username is already taken." });
-        }
-
-        // Create a new user
-        var newUser = new User
-        {
-            Username = dto.Username.Trim(),
-            PasswordHash = dto.Password, // Storing in plaintext for now
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _context.Users.Add(newUser);
-        await _context.SaveChangesAsync();
-
-        return Ok(new
-        {
-            id = newUser.Id,
-            username = newUser.Username
-        });
+        return Ok(result);
     }
-
-    // Authenticates an existing user
+    //this method handles the login endpoint. It accepts a LoginDto object containing the user's credentials, calls the LoginAsync method of the IAuthService, and returns an appropriate response based on the result. If the login is successful, it returns an AuthResponseDto with the authentication token and user information; otherwise, it returns an Unauthorized response with an error message.
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto dto)
+    [AllowAnonymous]
+    public async Task<ActionResult<AuthResponseDto>> Login(
+        LoginDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
+        var result = await _authService.LoginAsync(dto);
+
+        if (result is null)
         {
-            return BadRequest(new { message = "Username and password are required." });
+            return Unauthorized(new
+            {
+                message = "Invalid username/email or password."
+            });
         }
 
-        // Look up user
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == dto.Username.ToLower().Trim());
+        return Ok(result);
+    }
 
-        if (user == null || user.PasswordHash != dto.Password)
-        {
-            return Unauthorized(new { message = "Invalid username or password." });
-        }
+    [HttpGet("me")]
+    [Authorize]
+    public IActionResult Me()
+    {
+        var userId = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        var username = User.FindFirstValue(
+            ClaimTypes.Name);
+
+        var email = User.FindFirstValue(
+            ClaimTypes.Email);
 
         return Ok(new
         {
-            id = user.Id,
-            username = user.Username
+            userId,
+            username,
+            email
         });
     }
-}
-
-public class RegisterDto
-{
-    public string Username { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-}
-
-public class LoginDto
-{
-    public string Username { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
 }
