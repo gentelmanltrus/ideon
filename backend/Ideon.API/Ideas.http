@@ -1,40 +1,86 @@
 @baseUrl = http://localhost:5104/api
 
-### Get categories
+### 1. Register a new user
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "alpha_user_1",
+  "email": "alpha_user_1@example.com",
+  "password": "AlphaPassword123!"
+}
+
+### 2. Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "alpha_user_1",
+  "password": "AlphaPassword123!"
+}
+
+### 3. Get current user
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{login.response.body.$.token}}
+
+### 4. Get categories
 GET {{baseUrl}}/categories
 
-### Get all ideas
+### 5. Get all ideas
 GET {{baseUrl}}/ideas
 
-### Get one idea
-GET {{baseUrl}}/ideas/1
-
-### Create an idea - current DTO
-# AuthorId must belong to an existing user.
+### 6. Create an idea
+# @name createIdea
 POST {{baseUrl}}/ideas
+Authorization: Bearer {{login.response.body.$.token}}
 Content-Type: application/json
 
 {
   "title": "Alpha test idea",
   "description": "Testing the Ideon end-to-end flow.",
-  "authorId": 1,
   "categoryId": 1,
   "lookingForBuilder": true
 }
 
-### Get comments for an idea
-GET {{baseUrl}}/ideas/1/comments
+### 7. Get created idea
+GET {{baseUrl}}/ideas/{{createIdea.response.body.$.id}}
 
-### Create a comment - current DTO
-#current DTO requires all three fields.
-POST {{baseUrl}}/ideas/1/comments
+### 8. Add a comment
+POST {{baseUrl}}/ideas/{{createIdea.response.body.$.id}}/comments
+Authorization: Bearer {{login.response.body.$.token}}
 Content-Type: application/json
 
 {
-  "content": "This is a test comment.",
-  "ideaId": 1,
-  "authorId": 1
+  "content": "This is a test comment."
 }
 
-### Get ratings - current route
-GET {{baseUrl}}/rating
+### 9. Get comments
+GET {{baseUrl}}/ideas/{{createIdea.response.body.$.id}}/comments
+
+### 10. Add a rating
+POST {{baseUrl}}/ideas/{{createIdea.response.body.$.id}}/ratings
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "originality": 5,
+  "feasibility": 4,
+  "usefulness": 5
+}
+
+### 11. Get ratings
+GET {{baseUrl}}/ideas/{{createIdea.response.body.$.id}}/ratings
+
+### 12. Request collaboration
+# Use another registered user for this request.
+POST {{baseUrl}}/ideas/{{createIdea.response.body.$.id}}/collaboration-requests
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{}
+
+### 13. Get my collaboration requests
+GET {{baseUrl}}/collaboration-requests/mine
+Authorization: Bearer {{login.response.body.$.token}}
