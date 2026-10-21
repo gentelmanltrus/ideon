@@ -6,6 +6,7 @@ import {
     getIdeaById,
     getToken
 } from "../services/api";
+import { createRating, getRatings, updateMyRating } from "../services/api";
 //summary: This file contains the IdeaDetails component, which displays detailed information about a specific idea, including its title, description, category, author, creation date, and comments. It uses React hooks to manage state and side effects. The component fetches the idea details and comments from the API when it mounts and provides a form for users to submit new comments. Error handling is implemented to provide feedback to the user in case of issues during fetching or submission.
 export default function IdeaDetails() {
     const { id } = useParams();
@@ -34,6 +35,15 @@ export default function IdeaDetails() {
             setCommentsLoading(false);
         }
     }, [id]);
+
+    const [ratings, setRatings] = useState([]);
+const [ratingValues, setRatingValues] = useState({
+    originality: 3,
+    feasibility: 3,
+    usefulness: 3
+});
+const [ratingError, setRatingError] = useState("");
+const [ratingLoading, setRatingLoading] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -69,6 +79,25 @@ export default function IdeaDetails() {
     useEffect(() => {
         loadComments();
     }, [loadComments]);
+    useEffect(() => {
+    let cancelled = false;
+
+    getRatings(id)
+        .then((data) => {
+            if (!cancelled) {
+                setRatings(data);
+            }
+        })
+        .catch((err) => {
+            if (!cancelled) {
+                setRatingError(err.message);
+            }
+        });
+
+    return () => {
+        cancelled = true;
+    };
+}, [id]);
 
     async function handleCommentSubmit(event) {
         event.preventDefault();
@@ -99,6 +128,46 @@ export default function IdeaDetails() {
             setCommentSubmitting(false);
         }
     }
+    async function handleRatingSubmit(event) {
+    event.preventDefault();
+    setRatingError("");
+
+    if (!getToken()) {
+        setRatingError("Please sign in to rate an idea.");
+        return;
+    }
+
+    const payload = {
+        originality: Number(ratingValues.originality),
+        feasibility: Number(ratingValues.feasibility),
+        usefulness: Number(ratingValues.usefulness)
+    };
+
+    setRatingLoading(true);
+
+    try {
+        let saved;
+
+        try {
+            saved = await createRating(id, payload);
+        } catch (err) {
+            if (err.message.includes("already rated")) {
+                saved = await updateMyRating(id, payload);
+            } else {
+                throw err;
+            }
+        }
+
+        setRatings((current) => {
+            const others = current.filter((r) => r.id !== saved.id);
+            return [...others, saved];
+        });
+    } catch (err) {
+        setRatingError(err.message);
+    } finally {
+        setRatingLoading(false);
+    }
+}
 
     if (loading) {
         return <main><p>Loading idea...</p></main>;
@@ -144,6 +213,49 @@ export default function IdeaDetails() {
             )}
 
             <hr />
+            <section>
+    <h2>Rate this idea</h2>
+
+    <p>
+        {ratings.length} rating(s)
+    </p>
+
+    <form onSubmit={handleRatingSubmit}>
+        {[
+            ["originality", "Originality"],
+            ["feasibility", "Feasibility"],
+            ["usefulness", "Usefulness"]
+        ].map(([key, label]) => (
+            <div key={key}>
+                <label htmlFor={`rating-${key}`}>
+                    {label}: {ratingValues[key]}
+                </label>
+
+                <input
+                    id={`rating-${key}`}
+                    type="range"
+                    min="1"
+                    max="5"
+                    step="1"
+                    value={ratingValues[key]}
+                    onChange={(e) => setRatingValues((current) => ({
+                        ...current,
+                        [key]: Number(e.target.value)
+                    }))}
+                />
+            </div>
+        ))}
+
+        {ratingError && <p role="alert">{ratingError}</p>}
+
+        <button
+            type="submit"
+            disabled={ratingLoading || !getToken()}
+        >
+            {ratingLoading ? "Saving..." : "Submit rating"}
+        </button>
+    </form>
+</section>
 
             <section>
                 <h2>Comments</h2>

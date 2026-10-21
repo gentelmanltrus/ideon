@@ -1,66 +1,127 @@
 using Ideon.API.Data;
+using Ideon.API.DTOs.Ratings;
+using Ideon.API.Interfaces;
 using Ideon.API.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Ideon.API.Interfaces;
-// <summary>
-// The RatingService class implements the IRatingService interface, providing methods for managing ratings in the database, including retrieving, creating, updating, and deleting ratings.
-// </summary>
+namespace Ideon.API.Services;
+/// <summary> Implements the IRatingService interface, providing methods for managing ratings in the application.
 public class RatingService : IRatingService
 {
-	private readonly AppDbContext _context;
-	private readonly DbSet<Rating> _ratings;
+    private readonly AppDbContext _context;
 
-	public RatingService(AppDbContext context)
-	{
-		_context = context;
-		_ratings = context.Set<Rating>();
-	}
+    public RatingService(AppDbContext context)
+    {
+        _context = context;
+    }
 
-	public async Task<IEnumerable<Rating>> GetRatingsAsync()
-	{
-		return await _ratings.AsNoTracking().ToListAsync();
-	}
+    public async Task<IEnumerable<RatingResponseDto>> GetByIdeaIdAsync(
+        int ideaId)
+    {
+        return await _context.Ratings
+            .AsNoTracking()
+            .Where(r => r.IdeaId == ideaId)
+            .OrderBy(r => r.CreatedAt)
+            .Select(r => new RatingResponseDto
+            {
+                Id = r.Id,
+                IdeaId = r.IdeaId,
+                UserId = r.UserId,
+                Username = r.User.Username,
+                Originality = r.Originality,
+                Feasibility = r.Feasibility,
+                Usefulness = r.Usefulness,
+                CreatedAt = r.CreatedAt
+            })
+            .ToListAsync();
+    }
 
-	public async Task<Rating?> GetRatingByIdAsync(int id)
-	{
-		return await _ratings.AsNoTracking().FirstOrDefaultAsync(rating => rating.Id == id);
-	}
+    public async Task<RatingResponseDto?> CreateAsync(
+        int ideaId,
+        int userId,
+        CreateRatingDTO dto)
+    {
+        var ideaExists = await _context.Ideas
+            .AnyAsync(i => i.Id == ideaId);
 
-	public async Task<Rating> CreateRatingAsync(Rating rating)
-	{
-		ArgumentNullException.ThrowIfNull(rating);
+        if (!ideaExists)
+        {
+            return null;
+        }
 
-		await _ratings.AddAsync(rating);
-		await _context.SaveChangesAsync();
-		return rating;
-	}
+        var existing = await _context.Ratings
+            .AnyAsync(r => r.IdeaId == ideaId && r.UserId == userId);
 
-	public async Task<bool> UpdateRatingAsync(int id, Rating rating)
-	{
-		ArgumentNullException.ThrowIfNull(rating);
+        if (existing)
+        {
+            throw new InvalidOperationException(
+                "You have already rated this idea. Update your rating instead.");
+        }
 
-		var existingRating = await _ratings.FindAsync(id);
-		if (existingRating is null)
-		{
-			return false;
-		}
+        var rating = new Rating
+        {
+            IdeaId = ideaId,
+            UserId = userId,
+            Originality = dto.Originality,
+            Feasibility = dto.Feasibility,
+            Usefulness = dto.Usefulness,
+            CreatedAt = DateTime.UtcNow
+        };
 
-		_context.Entry(existingRating).CurrentValues.SetValues(rating);
-		await _context.SaveChangesAsync();
-		return true;
-	}
+        _context.Ratings.Add(rating);
+        await _context.SaveChangesAsync();
 
-	public async Task<bool> DeleteRatingAsync(int id)
-	{
-		var rating = await _ratings.FindAsync(id);
-		if (rating is null)
-		{
-			return false;
-		}
+        return await _context.Ratings
+            .AsNoTracking()
+            .Where(r => r.Id == rating.Id)
+            .Select(r => new RatingResponseDto
+            {
+                Id = r.Id,
+                IdeaId = r.IdeaId,
+                UserId = r.UserId,
+                Username = r.User.Username,
+                Originality = r.Originality,
+                Feasibility = r.Feasibility,
+                Usefulness = r.Usefulness,
+                CreatedAt = r.CreatedAt
+            })
+            .FirstAsync();
+    }
 
-		_ratings.Remove(rating);
-		await _context.SaveChangesAsync();
-		return true;
-	}
+    public async Task<RatingResponseDto?> UpdateMineAsync(
+        int ideaId,
+        int userId,
+        CreateRatingDTO dto)
+    {
+        var rating = await _context.Ratings
+            .FirstOrDefaultAsync(r =>
+                r.IdeaId == ideaId && r.UserId == userId);
+
+        if (rating is null)
+        {
+            return null;
+        }
+
+        rating.Originality = dto.Originality;
+        rating.Feasibility = dto.Feasibility;
+        rating.Usefulness = dto.Usefulness;
+
+        await _context.SaveChangesAsync();
+
+        return await _context.Ratings
+            .AsNoTracking()
+            .Where(r => r.Id == rating.Id)
+            .Select(r => new RatingResponseDto
+            {
+                Id = r.Id,
+                IdeaId = r.IdeaId,
+                UserId = r.UserId,
+                Username = r.User.Username,
+                Originality = r.Originality,
+                Feasibility = r.Feasibility,
+                Usefulness = r.Usefulness,
+                CreatedAt = r.CreatedAt
+            })
+            .FirstAsync();
+    }
 }

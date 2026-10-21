@@ -1,59 +1,91 @@
-using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Ideon.API.DTOs.Ratings;
 using Ideon.API.Interfaces;
-using Ideon.API.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
 namespace Ideon.API.Controllers;
-// <summary>
-// Controller for managing ratings.
+/// <summary> The RatingController class handles HTTP requests related to ratings, providing endpoints for retrieving, creating, and updating
 [ApiController]
-[Route("api/[controller]")]
-public sealed class RatingController : ControllerBase
+[Route("api/ideas/{ideaId:int}/ratings")]
+public class RatingController : ControllerBase
 {
-	private readonly IRatingService _ratingService;
+    private readonly IRatingService _ratingService;
 
-	public RatingController(IRatingService ratingService)
-	{
-		_ratingService = ratingService;
-	}
+    public RatingController(IRatingService ratingService)
+    {
+        _ratingService = ratingService;
+    }
 
-	[HttpGet]
-	public async Task<ActionResult<IReadOnlyCollection<Rating>>> GetAll(CancellationToken cancellationToken)
-	{
-		return Ok(await _ratingService.GetRatingsAsync());
-	}
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<RatingResponseDto>>> GetAll(
+        int ideaId)
+    {
+        return Ok(await _ratingService.GetByIdeaIdAsync(ideaId));
+    }
 
-	[HttpGet("{id:int}")]
-	public async Task<ActionResult<Rating>> GetById(int id, CancellationToken cancellationToken)
-	{
-		var ratings = await _ratingService.GetRatingsAsync();
-		var rating = ratings.FirstOrDefault(rating => rating.Id == id);
-		return rating is null ? NotFound() : Ok(rating);
-	}
+    [HttpPost]
+    [Authorize]
+    public async Task<ActionResult<RatingResponseDto>> Create(
+        int ideaId,
+        CreateRatingDTO dto)
+    {
+        var userIdValue = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
 
-	[HttpPost]
-	public async Task<ActionResult<Rating>> Create(
-		[FromBody] Rating request,
-		CancellationToken cancellationToken)
-	{
-		var rating = await _ratingService.CreateRatingAsync(request);
-		return CreatedAtAction(nameof(GetById), new { id = rating.Id }, rating);
-	}
+        if (!int.TryParse(userIdValue, out var userId))
+        {
+            return Unauthorized();
+        }
 
-	[HttpPut("{id:int}")]
-	public async Task<IActionResult> Update(
-		int id,
-		[FromBody] Rating request,
-		CancellationToken cancellationToken)
-	{
-		return await _ratingService.UpdateRatingAsync(id, request)
-			? NoContent()
-			: NotFound();
-	}
+        try
+        {
+            var rating = await _ratingService.CreateAsync(
+                ideaId,
+                userId,
+                dto);
 
-	[HttpDelete("{id:int}")]
-	public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
-	{
-		return await _ratingService.DeleteRatingAsync(id)
-			? NoContent()
-			: NotFound();
-	}
+            if (rating is null)
+            {
+                return NotFound(new { message = "Idea not found." });
+            }
+
+            return Ok(rating);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("mine")]
+    [Authorize]
+    public async Task<ActionResult<RatingResponseDto>> UpdateMine(
+        int ideaId,
+        CreateRatingDTO dto)
+    {
+        var userIdValue = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdValue, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var rating = await _ratingService.UpdateMineAsync(
+            ideaId,
+            userId,
+            dto);
+
+        if (rating is null)
+        {
+            return NotFound(new
+            {
+                message = "You have not rated this idea yet."
+            });
+        }
+
+        return Ok(rating);
+    }
 }
