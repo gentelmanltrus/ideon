@@ -97,9 +97,10 @@ namespace Ideon.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("IdeaId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("IdeaId", "UserId")
+                        .IsUnique();
 
                     b.ToTable("CollaborationRequests");
                 });
