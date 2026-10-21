@@ -7,6 +7,9 @@ import {
     getToken
 } from "../services/api";
 import { createRating, getRatings, updateMyRating } from "../services/api";
+import {
+    createCollaborationRequest
+} from "../services/api";
 //summary: This file contains the IdeaDetails component, which displays detailed information about a specific idea, including its title, description, category, author, creation date, and comments. It uses React hooks to manage state and side effects. The component fetches the idea details and comments from the API when it mounts and provides a form for users to submit new comments. Error handling is implemented to provide feedback to the user in case of issues during fetching or submission.
 export default function IdeaDetails() {
     const { id } = useParams();
@@ -21,6 +24,11 @@ export default function IdeaDetails() {
 
     const [error, setError] = useState("");
     const [commentsError, setCommentsError] = useState("");
+
+    // Collaboration request state
+    const [collaborationError, setCollaborationError] = useState("");
+const [collaborationMessage, setCollaborationMessage] = useState("");
+const [collaborationLoading, setCollaborationLoading] = useState(false);
 
     const loadComments = useCallback(async () => {
         setCommentsLoading(true);
@@ -47,7 +55,7 @@ const [ratingLoading, setRatingLoading] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
-
+        // Load idea details
         async function loadIdea() {
             setLoading(true);
             setError("");
@@ -128,6 +136,30 @@ const [ratingLoading, setRatingLoading] = useState(false);
             setCommentSubmitting(false);
         }
     }
+    // Collaboration request handler
+    async function handleCollaborationRequest() {
+    setCollaborationError("");
+    setCollaborationMessage("");
+
+    if (!getToken()) {
+        setCollaborationError("Please sign in first.");
+        return;
+    }
+
+    setCollaborationLoading(true);
+
+    try {
+        await createCollaborationRequest(id);
+
+        setCollaborationMessage(
+            "Your collaboration request has been sent."
+        );
+    } catch (err) {
+        setCollaborationError(err.message);
+    } finally {
+        setCollaborationLoading(false);
+    }
+}
     async function handleRatingSubmit(event) {
     event.preventDefault();
     setRatingError("");
@@ -209,8 +241,38 @@ const [ratingLoading, setRatingLoading] = useState(false);
             </p>
 
             {idea.lookingForBuilder && (
+                <section>
+        <h2>Collaboration</h2>
+
+        <p>The author is looking for a builder.</p>
+
+        <button
+            type="button"
+            onClick={handleCollaborationRequest}
+            disabled={collaborationLoading || !getToken()}
+        >
+            {collaborationLoading
+                ? "Sending..."
+                : "Request to collaborate"}
+        </button>
+
+        {!getToken() && (
+            <p>
+                <Link to="/">Sign in</Link> to request collaboration.
+            </p>
+        )}
+
+        {collaborationMessage && (
+            <p role="status">{collaborationMessage}</p>
+        )}
+
+        {collaborationError && (
+            <p role="alert">{collaborationError}</p>
+        )}
+    </section>
+)}
                 <p><strong>Looking for a Builder</strong></p>
-            )}
+            
 
             <hr />
             <section>
