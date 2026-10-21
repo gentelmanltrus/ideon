@@ -11,6 +11,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 // controller services are added to the dependency injection container, allowing them to be discovered and used by the application.
 builder.Services.AddControllers();
+// Add collaboration request service to the dependency injection container, allowing it to be injected into controllers and other services that require it.
+builder.Services.AddScoped<
+    ICollaborationRequestService,
+    CollaborationRequestService>();
 //these services are added to the dependency injection container, allowing them to be injected into controllers and other services that require them.
 builder.Services.AddScoped<IAuthService, AuthService>();
 // Add JWT authentication configuration
