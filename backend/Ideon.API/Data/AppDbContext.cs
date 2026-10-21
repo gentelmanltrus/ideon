@@ -63,6 +63,9 @@ public class AppDbContext : DbContext
             "CK_Ratings_Usefulness",
             "\"Usefulness\" BETWEEN 1 AND 5");
     });
+    modelBuilder.Entity<CollaborationRequest>()
+    .HasIndex(r => new { r.IdeaId, r.UserId })
+    .IsUnique();
     // Seed initial data for Categories
     modelBuilder.Entity<Category>().HasData(
     new Category

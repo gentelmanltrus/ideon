@@ -15,10 +15,10 @@ public class CreateIdeaDto
     [MaxLength(2000)]
     public string Description { get; set; } = string.Empty;
 
-    [Required]
-    public int AuthorId { get; set; }
+    //authorid is not required because it will be set in the controller based on the authenticated user making the request. This ensures that the idea is associated with the correct user without requiring the client to provide this information.
 
     [Required]
+    [Range(1, int.MaxValue)]
     public int CategoryId { get; set; }
 
     public bool LookingForBuilder { get; set; }

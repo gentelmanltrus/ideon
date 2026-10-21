@@ -62,22 +62,39 @@ public class IdeaService : IIdeaService
     }
 
     // Creates a new idea in the database based on the provided CreateIdeaDto object and returns the created idea as an IdeaResponseDto object.
-    public async Task<IdeaResponseDto> CreateAsync(CreateIdeaDto dto)
+    public async Task<IdeaResponseDto> CreateAsync(
+    CreateIdeaDto dto,
+    int authorId)
 {
+    var authorExists = await _context.Users
+        .AnyAsync(u => u.Id == authorId);
+
+    if (!authorExists)
+    {
+        throw new ArgumentException("Authenticated user does not exist.");
+    }
+
+    var categoryExists = await _context.Categories
+        .AnyAsync(c => c.Id == dto.CategoryId);
+
+    if (!categoryExists)
+    {
+        throw new ArgumentException("Category does not exist.");
+    }
+
     var idea = new Idea
     {
-        Title = dto.Title,
-        Description = dto.Description,
-        AuthorId = dto.AuthorId,
+        Title = dto.Title.Trim(),
+        Description = dto.Description.Trim(),
+        AuthorId = authorId,
         CategoryId = dto.CategoryId,
         LookingForBuilder = dto.LookingForBuilder,
         CreatedAt = DateTime.UtcNow,
         UpdatedAt = DateTime.UtcNow
     };
 
-    _context.Ideas.Add(idea); // The new idea is added to the Ideas DbSet in the AppDbContext, marking it for insertion into the database.
-
-    await _context.SaveChangesAsync();// The changes are saved to the database - tells entity framework to persist the changes made to the context, including the newly added idea, to the underlying database. 
+    _context.Ideas.Add(idea);
+    await _context.SaveChangesAsync();
 
     return (await GetByIdAsync(idea.Id))!;
 }

@@ -1,12 +1,12 @@
-
+using System.Security.Claims;
 using Ideon.API.DTOs.Comments;
 using Ideon.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ideon.API.Controllers;
 /// <summary>
-/// Controller for managing comments related to ideas.
-/// </summary>
+/// The CommentsController class handles HTTP requests related to comments, providing endpoints for retrieving and creating comments
 [ApiController]
 [Route("api/ideas/{ideaId:int}/comments")]
 public class CommentsController : ControllerBase
@@ -19,6 +19,7 @@ public class CommentsController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<CommentResponseDto>>> GetAll(
         int ideaId)
     {
@@ -29,36 +30,49 @@ public class CommentsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<CommentResponseDto>> Create(
         int ideaId,
         CreateCommentDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Content))
+        var userIdValue = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdValue, out var userId))
         {
-            return BadRequest("Comment content cannot be empty.");
+            return Unauthorized();
         }
 
-        if (dto.Content.Length > 1000)
+        if (string.IsNullOrWhiteSpace(dto.Content))
         {
-            return BadRequest("Comment cannot exceed 1000 characters.");
+            return BadRequest(new
+            {
+                message = "Comment content cannot be empty."
+            });
         }
 
         try
         {
-            var comment =
-                await _commentService.CreateAsync(ideaId, dto);
+            var comment = await _commentService.CreateAsync(
+                ideaId,
+                userId,
+                dto);
 
             if (comment is null)
             {
-                return NotFound("Idea not found.");
+                return NotFound(new
+                {
+                    message = "Idea not found."
+                });
             }
 
-            return Created($"/api/ideas/{ideaId}/comments/{comment.Id}",
+            return Created(
+                $"/api/ideas/{ideaId}/comments",
                 comment);
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new { message = ex.Message });
         }
     }
 }
