@@ -1,79 +1,140 @@
-import { useEffect, useState } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
-import '../styles/MainPage.css'
-import { getIdeas } from '../services/api'
-
-// Displays ideas from the backend, filtered by the selected category.
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { getIdeas } from "../services/api";
+import "../styles/MainPage.css";
+//summary: This file contains the MainPage component, which displays a list of ideas fetched from the API. It uses React hooks to manage state and side effects. The component fetches ideas when it mounts and filters them based on the selected category from the URL search parameters. Error handling is implemented to provide feedback to the user in case of issues during fetching.
 export default function MainPage() {
-  const [searchParams] = useSearchParams()
-  const activeCategory = searchParams.get('category') || 'all'
+    const [searchParams] = useSearchParams();
+    const categoryParam = searchParams.get("category");
 
-  const [ideas, setIdeas] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  // Fetch ideas from the backend when the component mounts.
-  useEffect(() => {
-    async function loadIdeas() {
-      try {
-        const data = await getIdeas()
-        setIdeas(data)
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
+    const [ideas, setIdeas] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadIdeas() {
+            setLoading(true);
+            setError("");
+
+            try {
+                const data = await getIdeas();
+
+                if (!cancelled) {
+                    setIdeas(data);
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setError(err.message);
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
+        }
+
+        loadIdeas();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const filteredIdeas = useMemo(() => {
+        if (!categoryParam) {
+            return ideas;
+        }
+
+        const categoryId = Number(categoryParam);
+
+        if (!Number.isInteger(categoryId)) {
+            return [];
+        }
+
+        return ideas.filter(
+            (idea) => idea.categoryId === categoryId
+        );
+    }, [ideas, categoryParam]);
+
+    if (loading) {
+        return <main className="feed-container">Loading ideas...</main>;
     }
 
-    loadIdeas()
-  }, [])
-  // Filter ideas based on the selected category. If 'all' is selected, show all ideas; otherwise, filter by the selected category ID.
-  const filteredIdeas =
-    activeCategory === 'all'
-      ? ideas
-      : ideas.filter((idea) => idea.categoryId === Number(activeCategory))
-  // Render loading, error, or the main page with the list of ideas filtered by the selected category.
-  if (loading) {
-    return <div className="feed-container">Loading ideas...</div>
-  }
+    if (error) {
+        return (
+            <main className="feed-container">
+                <p role="alert">Could not load ideas: {error}</p>
+                <Link to="/categories">Back to categories</Link>
+            </main>
+        );
+    }
 
-  if (error) {
-    return <div className="feed-container">Error: {error}</div>
-  }
+    return (
+        <main className="feed-container">
+            <header className="feed-header">
+                <div className="header-left">
+                    <h1>Ideon</h1>
+                    <p>
+                        {categoryParam
+                            ? `Category ID: ${categoryParam}`
+                            : "All ideas"}
+                    </p>
+                </div>
 
-  return (
-    <div className="feed-container">
-      <header className="feed-header">
-        <div className="header-left">
-          <h2>Ideon</h2>
-          <span className="category-badge">{activeCategory.toUpperCase()}</span>
-        </div>
-        <div className="header-actions">
-          <Link to="/ideas/new" className="create-idea-btn">Create an idea</Link>
-          <Link to="/categories" className="change-category-btn">Change Category</Link>
-        </div>
-      </header>
+                <nav>
+                    <Link to="/categories">Change category</Link>
+                    {" | "}
+                    <Link to="/ideas/new">Create an idea</Link>
+                </nav>
+            </header>
 
-      <div className="feed-list">
-        {filteredIdeas.map((idea) => (
-          <Link
-            key={idea.id}
-            to={`/ideas/${idea.id}`}
-            className="idea-card"
-          >
-            <div className="idea-author-row">
-              <img src={idea.avatar} alt={idea.authorUsername} className="author-avatar" />
-              <div>
-                <h3 className="author-name">{idea.authorUsername}</h3>
-                <span className="post-time">{new Date(idea.createdAt).toLocaleDateString()} • <span className="post-cat">{idea.categoryName}</span></span>
-              </div>
-            </div>
+            <section className="feed-list">
+                {filteredIdeas.length === 0 && (
+                    <p>No ideas found in this category yet.</p>
+                )}
 
-            <div className="idea-content">
-              <p className="idea-body-text">{idea.description}</p>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
-  )
+                {filteredIdeas.map((idea) => (
+                    <article key={idea.id} className="idea-card">
+                        <div className="idea-author-row">
+                            <div>
+                                <h2>
+                                    <Link to={`/ideas/${idea.id}`}>
+                                        {idea.title}
+                                    </Link>
+                                </h2>
+
+                                <p className="post-time">
+                                    By {idea.authorUsername}
+                                    {" · "}
+                                    {idea.categoryName}
+                                    {" · "}
+                                    {new Date(
+                                        idea.createdAt
+                                    ).toLocaleDateString()}
+                                </p>
+                            </div>
+                        </div>
+
+                        <p className="idea-body-text">
+                            {idea.description}
+                        </p>
+
+                        {idea.lookingForBuilder && (
+                            <p>
+                                <strong>Looking for a Builder</strong>
+                            </p>
+                        )}
+
+                        <p>
+                            <Link to={`/ideas/${idea.id}`}>
+                                Open idea and comments →
+                            </Link>
+                        </p>
+                    </article>
+                ))}
+            </section>
+        </main>
+    );
 }
