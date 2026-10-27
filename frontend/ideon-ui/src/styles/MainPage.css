@@ -1,111 +1,152 @@
+
 .feed-container {
-  max-width: 680px;
-  width: 100%;
+  width: min(760px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 1.5rem 1rem;
-  font-family: system-ui, -apple-system, sans-serif;
-  color: #e4e6eb;
-  box-sizing: border-box;
-}
-.feed-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #3e4042;
+  padding: 32px 0 60px;
+  color: var(--color-text);
 }
 
+.feed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.header-left,
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 12px;
 }
 
-.category-badge {
-  background-color: #263951;
-  color: #70b5f9;
-  padding: 0.25rem 0.6rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  margin-left: 0.75rem;
+.header-actions {
+  flex-wrap: wrap;
 }
 
 .create-idea-btn {
-  background: #2374e1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 15px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
   color: white;
-  padding: 0.5rem 0.8rem;
-  border-radius: 6px;
-  font-weight: 600;
+  font-weight: 650;
   text-decoration: none;
+}
+
+.create-idea-btn:hover {
+  background: var(--color-primary-hover);
 }
 
 .change-category-btn {
-  color: #a8c7fa;
+  color: var(--color-muted);
   text-decoration: none;
-  font-size: 0.9rem;
 }
 
-.author-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #3a3b3c;
+.change-category-btn:hover {
+  color: var(--color-primary);
+}
+
+.feed-list {
+  display: grid;
+  gap: 16px;
 }
 
 .idea-card {
-  display: block;
-  background: #242526;
-  border: 1px solid #3e4042;
-  border-radius: 10px;
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
+  padding: 22px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
   color: inherit;
   text-decoration: none;
+  transition:
+    border-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.idea-card:hover {
+  transform: translateY(-2px);
+  border-color: #c9c2ff;
+  box-shadow: 0 12px 30px rgb(31 35 65 / 9%);
 }
 
 .idea-author-row {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.5rem;                 
-  margin-bottom: 0.75rem;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
- /*Forces the username to the left  */
-.idea-author-row > div {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;   
+.author-avatar {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 750;
 }
 
 .author-name {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .post-time {
+  margin: 3px 0 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.category-badge {
+  display: inline-flex;
+  margin-bottom: 12px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
   font-size: 0.8rem;
-  color: #b0b3b8;
+  font-weight: 650;
 }
 
 .idea-prompt-tag {
   display: inline-block;
-  font-style: italic;
-  font-weight: 600;
-  color: #4599ff;
-  font-size: 1.05rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 8px;
+  color: var(--color-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .idea-body-text {
-  text-align: left;
-  width: 100%;
-  margin: 0.5rem 0 0;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: #e4e6eb;
-  white-space: pre-line; 
-  word-break: break-word;
+  margin: 10px 0 0;
+  color: var(--color-muted);
+  line-height: 1.65;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 560px) {
+  .feed-container {
+    padding-top: 20px;
+  }
+
+  .feed-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .idea-card {
+    padding: 17px;
+  }
 }
