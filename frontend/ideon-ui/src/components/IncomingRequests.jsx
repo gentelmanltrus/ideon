@@ -14,23 +14,34 @@ export default function IncomingRequests() {
     const [actionError, setActionError] = useState("");
     const [busyId, setBusyId] = useState(null);
 
-    async function loadRequests() {
-        setLoading(true);
-        setError("");
+    useEffect(() => {
+    let cancelled = false;
 
+    async function loadRequests() {
         try {
             const data = await getIncomingCollaborationRequests();
-            setRequests(data);
+
+            if (!cancelled) {
+                setRequests(data);
+                setError("");
+            }
         } catch (err) {
-            setError(err.message || "Could not load requests.");
+            if (!cancelled) {
+                setError(err.message || "Could not load requests.");
+            }
         } finally {
-            setLoading(false);
+            if (!cancelled) {
+                setLoading(false);
+            }
         }
     }
 
-    useEffect(() => {
-        loadRequests();
-    }, []);
+    loadRequests();
+
+    return () => {
+        cancelled = true;
+    };
+}, []);
 
     async function handleDecision(requestId, status) {
         setBusyId(requestId);
@@ -88,13 +99,7 @@ export default function IncomingRequests() {
                     <p className="error-message" role="alert">
                         {error}
                     </p>
-                    <button
-                        className="btn btn-secondary"
-                        onClick={loadRequests}
-                        type="button"
-                    >
-                        Try again
-                    </button>
+                    <button onClick={() => window.location.reload()}>Try again</button>
                 </div>
             ) : requests.length === 0 ? (
                 <div className="requests-empty surface">
