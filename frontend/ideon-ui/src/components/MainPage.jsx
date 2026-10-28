@@ -144,6 +144,12 @@ export default function MainPage() {
                     >
                         + New idea
                     </Link>
+                    <Link
+                     className="btn btn-secondary"
+                    to="/collaboration-requests"
+                    >
+                        Requests
+                </Link>
                 </nav>
             </header>
 

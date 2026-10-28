@@ -5,6 +5,7 @@ import MainPage from './components/MainPage'
 import CategorySelect from './components/CategorySelect'
 import IdeaDetails from "./components/IdeaDetails";
 import CreateIdea from "./components/CreateIdea";
+import IncomingRequests from "./components/IncomingRequests";
 function App() {
   return (
     <Routes>
@@ -13,6 +14,7 @@ function App() {
       <Route path="/ideas/:id" element={<IdeaDetails />} />
       <Route path="/main" element={<MainPage />} />
       <Route path="/ideas/new" element={<CreateIdea />} />
+      <Route path="/collaboration-requests" element={<IncomingRequests />}/>
     </Routes>
   )
 }
