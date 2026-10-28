@@ -1,64 +1,88 @@
+
 .category-container {
-  max-width: 900px;
+  width: min(1000px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 40px 0 60px;
+  text-align: left;
 }
 
-.category-container h1 {
-  font-size: 2.2rem;
-  margin-bottom: 0.5rem;
+.category-container header {
+  margin-bottom: 32px;
 }
 
-.category-container h2 {
-  font-size: 1.2rem;
-  color: #a1a1aa;
-  margin-bottom: 2.5rem;
-  font-weight: 400;
+.category-container header > p {
+  margin-bottom: 20px;
+  color: var(--color-muted);
+}
+
+.category-container header button {
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--color-text);
 }
 
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .category-card {
-  border: 1px solid #3f3f46;
-  background-color: #18181b;
-  border-radius: 12px;
-  padding: 1.75rem 1.25rem;
   display: flex;
+  min-height: 140px;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  cursor: pointer;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: left;
+  box-shadow: var(--shadow-card);
   transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    border-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .category-card:hover {
-  transform: translateY(-4px);
-  border-color: #6366f1;
-  box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.2);
-}
-
-.category-card .icon {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
+  transform: translateY(-2px);
+  border-color: #c9c2ff;
+  box-shadow: 0 12px 30px rgb(31 35 65 / 8%);
 }
 
 .category-card h3 {
+  margin: 0;
   font-size: 1.15rem;
-  margin: 0 0 0.5rem 0;
-  color: #f4f4f5;
 }
 
-.category-card p {
-  font-size: 0.875rem;
-  color: #a1a1aa;
-  margin: 0;
-  line-height: 1.4;
+.category-container > p {
+  margin-top: 24px;
+}
+
+.category-container a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.category-container a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 620px) {
+  .category-container {
+    padding-top: 24px;
+  }
+
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .category-card {
+    min-height: 100px;
+  }
 }

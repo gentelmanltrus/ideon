@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
     createComment,
@@ -30,19 +30,6 @@ export default function IdeaDetails() {
 const [collaborationMessage, setCollaborationMessage] = useState("");
 const [collaborationLoading, setCollaborationLoading] = useState(false);
 
-    const loadComments = useCallback(async () => {
-        setCommentsLoading(true);
-        setCommentsError("");
-
-        try {
-            const data = await getComments(id);
-            setComments(data);
-        } catch (err) {
-            setCommentsError(err.message);
-        } finally {
-            setCommentsLoading(false);
-        }
-    }, [id]);
 
     const [ratings, setRatings] = useState([]);
 const [ratingValues, setRatingValues] = useState({
@@ -85,12 +72,38 @@ const [ratingLoading, setRatingLoading] = useState(false);
     }, [id]);
 
     useEffect(() => {
-        loadComments();
-    }, [loadComments]);
-    useEffect(() => {
     let cancelled = false;
 
-    getRatings(id)
+    async function loadComments() {
+        try {
+            const data = await getComments(id);
+
+            if (!cancelled) {
+                setComments(data);
+                setCommentsError("");
+            }
+        } catch (err) {
+            if (!cancelled) {
+                setCommentsError(err.message);
+            }
+        } finally {
+            if (!cancelled) {
+                setCommentsLoading(false);
+            }
+        }
+    }
+
+    loadComments();
+
+    return () => {
+        cancelled = true;
+    };
+}, [id]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        getRatings(id)
         .then((data) => {
             if (!cancelled) {
                 setRatings(data);

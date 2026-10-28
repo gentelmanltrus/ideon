@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Ideon.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
+using Ideon.API.DTOs.CollaborationRequests;
 namespace Ideon.API.Controllers;
 /// <summary> The CollaborationRequestsController class handles HTTP requests related to collaboration requests, providing endpoints for creating and retrieving collaboration requests for ideas.
 [ApiController]
@@ -86,4 +86,70 @@ public class CollaborationRequestsController : ControllerBase
 
         return Ok(requests);
     }
+    //this method retrieves all incoming collaboration requests for a specific author. It takes the author's ID as a parameter and returns a collection of CollaborationRequestResponseDto objects representing the incoming requests.
+[HttpGet("collaboration-requests/incoming")]
+public async Task<IActionResult> GetIncoming()
+{
+    var userIdValue = User.FindFirstValue(
+        ClaimTypes.NameIdentifier);
+
+    if (!int.TryParse(userIdValue, out var userId))
+    {
+        return Unauthorized();
+    }
+
+    var requests = await _service.GetIncomingAsync(userId);
+
+    return Ok(requests);
+}
+//  Updates the status of a collaboration request.
+[HttpPatch("collaboration-requests/{requestId:int}/status")]
+public async Task<IActionResult> UpdateStatus(
+    int requestId,
+    [FromBody] UpdateCollaborationRequestStatusDto dto)
+{
+    var userIdValue = User.FindFirstValue(
+        ClaimTypes.NameIdentifier);
+
+    if (!int.TryParse(userIdValue, out var userId))
+    {
+        return Unauthorized();
+    }
+
+    var result = await _service.UpdateStatusAsync(
+        requestId,
+        userId,
+        dto.Status);
+
+    if (result.Request is not null)
+    {
+        return Ok(result.Request);
+    }
+
+    return result.ErrorCode switch
+    {
+        "request_not_found" => NotFound(new
+        {
+            message = "Collaboration request not found."
+        }),
+
+        "forbidden" => Forbid(),
+
+        "already_processed" => Conflict(new
+        {
+            message = "This request has already been processed."
+        }),
+
+        "invalid_status" => BadRequest(new
+        {
+            message = "Status must be Accepted or Rejected."
+        }),
+
+        _ => StatusCode(500, new
+        {
+            message = "An unexpected error occurred."
+        })
+    };
+}
+
 }

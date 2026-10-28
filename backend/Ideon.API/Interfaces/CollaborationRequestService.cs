@@ -96,4 +96,85 @@ public class CollaborationRequestService : ICollaborationRequestService
             })
             .ToListAsync();
     }
+    
+public async Task<IEnumerable<CollaborationRequestResponseDto>>
+    GetIncomingAsync(int authorId)
+{
+    return await _context.CollaborationRequests
+        .AsNoTracking()
+        .Where(r => r.Idea.AuthorId == authorId)
+        .OrderByDescending(r => r.CreatedAt)
+        .Select(r => new CollaborationRequestResponseDto
+        {
+            Id = r.Id,
+            IdeaId = r.IdeaId,
+            IdeaTitle = r.Idea.Title,
+            UserId = r.UserId,
+            Username = r.User.Username,
+            Status = r.Status,
+            CreatedAt = r.CreatedAt
+        })
+        .ToListAsync();
+}
+
+public async Task<(
+    CollaborationRequestResponseDto? Request,
+    string? ErrorCode
+)>
+    UpdateStatusAsync(
+        int requestId,
+        int authorId,
+        string status)
+{
+    var normalizedStatus = status.Trim();
+
+    if (normalizedStatus != "Accepted" &&
+        normalizedStatus != "Rejected")
+    {
+        return (null, "invalid_status");
+    }
+
+    var request = await _context.CollaborationRequests
+        .Include(r => r.Idea)
+        .FirstOrDefaultAsync(r => r.Id == requestId);
+
+    if (request is null)
+    {
+        return (null, "request_not_found");
+    }
+
+    // Only the author of the idea can decide on the request.
+    if (request.Idea.AuthorId != authorId)
+    {
+        return (null, "forbidden");
+    }
+
+    // A processed request cannot be changed again.
+    if (request.Status != "Pending")
+    {
+        return (null, "already_processed");
+    }
+
+    request.Status = normalizedStatus;
+
+    await _context.SaveChangesAsync();
+
+    var response = await _context.CollaborationRequests
+        .AsNoTracking()
+        .Where(r => r.Id == requestId)
+        .Select(r => new CollaborationRequestResponseDto
+        {
+            Id = r.Id,
+            IdeaId = r.IdeaId,
+            IdeaTitle = r.Idea.Title,
+            UserId = r.UserId,
+            Username = r.User.Username,
+            Status = r.Status,
+            CreatedAt = r.CreatedAt
+        })
+        .FirstAsync();
+
+    return (response, null);
+}
+
 }

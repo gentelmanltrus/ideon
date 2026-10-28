@@ -1,0 +1,124 @@
+
+.requests-page {
+  width: min(900px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 34px 0 60px;
+}
+
+.requests-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.requests-eyebrow,
+.request-label {
+  margin-bottom: 8px;
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.requests-list {
+  display: grid;
+  gap: 16px;
+}
+
+.request-card {
+  padding: 22px;
+}
+
+.request-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.request-card-top h2 {
+  margin-bottom: 0;
+}
+
+.request-status {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f0eff5;
+  color: #5e5b70;
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.status-pending {
+  background: #fff3d9;
+  color: #8a5700;
+}
+
+.status-accepted {
+  background: #e5f7eb;
+  color: #18794e;
+}
+
+.status-rejected {
+  background: #ffeaec;
+  color: #b42336;
+}
+
+.request-date {
+  margin: 8px 0 0;
+  font-size: 0.86rem;
+}
+
+.request-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.request-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.requests-empty {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 30px;
+}
+
+.requests-empty h2,
+.requests-empty p {
+  margin-bottom: 0;
+}
+
+.requests-error {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: #ffeaec;
+  color: var(--color-danger);
+}
+
+@media (max-width: 640px) {
+  .requests-header,
+  .request-card-top {
+    flex-direction: column;
+  }
+
+  .request-card-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

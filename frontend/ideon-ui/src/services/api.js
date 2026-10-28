@@ -154,14 +154,14 @@ export async function createRating(ideaId, data) {
         body: JSON.stringify(data)
     });
 }
-
+// Retrieves the current user's rating for a specific idea. It makes a GET request to the "/ideas/{ideaId}/ratings/mine" endpoint and returns the response data.
 export async function updateMyRating(ideaId, data) {
     return request(`/ideas/${ideaId}/ratings/mine`, {
         method: "PUT",
         body: JSON.stringify(data)
     });
 }
-
+// Retrieves the current user's rating for a specific idea. It makes a GET request to the "/ideas/{ideaId}/ratings/mine" endpoint and returns the response data.
 export async function createCollaborationRequest(ideaId) {
     return request(`/ideas/${ideaId}/collaboration-requests`, {
         method: "POST",
@@ -171,4 +171,18 @@ export async function createCollaborationRequest(ideaId) {
 
 export async function getMyCollaborationRequests() {
     return request("/collaboration-requests/mine");
+}
+// Retrieves the list of collaboration requests that the current user has sent to other users. It makes a GET request to the "/collaboration-requests/mine" endpoint and returns the response data.
+export async function getIncomingCollaborationRequests() {
+    return request("/collaboration-requests/incoming");
+}
+// Retrieves the list of collaboration requests that the current user has received from other users. It makes a GET request to the "/collaboration-requests/incoming" endpoint and returns the response data.
+export async function updateCollaborationRequestStatus(
+    requestId,
+    status
+) {
+    return request(`/collaboration-requests/${requestId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status })
+    });
 }
