@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login, register, saveAuth } from "../services/api";
+import "../styles/LoginForm.css";
+
 // The LoginForm component provides a user interface for signing in or registering an account. It manages form state, handles form submission, and interacts with the backend API for authentication.
 export default function LoginForm() {
     const navigate = useNavigate();
@@ -54,18 +56,17 @@ export default function LoginForm() {
     }
 
     return (
-        <div className="AppContainer">
-            <header>
+        <div className="auth-container">
+            <header className="auth-header">
                 <h1>Ideon</h1>
+                <p className="auth-tagline">Make your ideas a reality</p>
             </header>
 
             <main>
-                <p className="tagline">Make your ideas a reality</p>
+                <h2 className="auth-title">{isRegister ? "Create an account" : "Sign in"}</h2>
 
-                <h2>{isRegister ? "Create an account" : "Sign in"}</h2>
-
-                <form onSubmit={handleSubmit}>
-                    <div>
+                <form onSubmit={handleSubmit} className="auth-form">
+                    <div className="form-group">
                         <label htmlFor="username">
                             {isRegister ? "Username" : "Username or email"}
                         </label>
@@ -82,7 +83,7 @@ export default function LoginForm() {
                     </div>
 
                     {isRegister && (
-                        <div>
+                        <div className="form-group">
                             <label htmlFor="email">Email</label>
 
                             <input
@@ -97,7 +98,7 @@ export default function LoginForm() {
                         </div>
                     )}
 
-                    <div>
+                    <div className="form-group">
                         <label htmlFor="password">Password</label>
 
                         <input
@@ -114,9 +115,9 @@ export default function LoginForm() {
                         />
                     </div>
 
-                    {error && <p role="alert">{error}</p>}
+                    {error && <p className="auth-error" role="alert">{error}</p>}
 
-                    <button type="submit" disabled={loading}>
+                    <button type="submit" disabled={loading} className="auth-submit-btn">
                         {loading
                             ? "Please wait..."
                             : isRegister
@@ -125,13 +126,14 @@ export default function LoginForm() {
                     </button>
                 </form>
 
-                <p>
+                <p className="auth-switch-row">
                     {isRegister
                         ? "Already have an account?"
-                        : "Don't have an account?"}{" "}
+                        : "Don't have an account?"}
 
                     <button
                         type="button"
+                        className="auth-switch-btn"
                         onClick={() => {
                             setIsRegister(!isRegister);
                             setError("");
