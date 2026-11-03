@@ -2,7 +2,7 @@
 .feed-container {
   width: min(760px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 32px 0 60px;
+  padding: 5px 0 60px;
   color: var(--color-text);
 }
 
