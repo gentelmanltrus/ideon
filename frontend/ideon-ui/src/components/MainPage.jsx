@@ -207,7 +207,7 @@ export default function MainPage() {
                         )}
                     </div>
                 ) : (
-                    visibleIdeas.map((idea) => (
+visibleIdeas.map((idea) => (
                         <article key={idea.id} className="idea-card">
                             <div className="idea-author-row">
                                 <div className="author-avatar" aria-hidden="true">
@@ -250,6 +250,37 @@ export default function MainPage() {
                                     Looking for a collaborator
                                 </p>
                             )}
+
+                            {/* --- Aggregate Ratings Section --- */}
+                            <div className="idea-card-ratings">
+                                <div className="rating-pill">
+                                    <span>Originality</span>
+                                    <strong>
+                                        {idea.ratingCount > 0
+                                            ? Number(idea.averageOriginality).toFixed(1)
+                                            : "-"}
+                                    </strong>
+                                </div>
+                                <div className="rating-pill">
+                                    <span>Feasibility</span>
+                                    <strong>
+                                        {idea.ratingCount > 0
+                                            ? Number(idea.averageFeasibility).toFixed(1)
+                                            : "-"}
+                                    </strong>
+                                </div>
+                                <div className="rating-pill">
+                                    <span>Usefulness</span>
+                                    <strong>
+                                        {idea.ratingCount > 0
+                                            ? Number(idea.averageUsefulness).toFixed(1)
+                                            : "-"}
+                                    </strong>
+                                </div>
+                                <span className="rating-count-text">
+                                    ({idea.ratingCount || 0} {idea.ratingCount === 1 ? "vote" : "votes"})
+                                </span>
+                            </div>
 
                             <div className="idea-card-footer">
                                 <Link

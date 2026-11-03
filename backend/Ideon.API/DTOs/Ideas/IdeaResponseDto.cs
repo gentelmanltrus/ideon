@@ -1,8 +1,7 @@
 namespace Ideon.API.DTOs.Ideas;
 
-// <summary>
-// Represents the data transfer object (DTO) for responding with idea details.
-
+/// <summary>
+/// Represents the data transfer object (DTO) for responding with idea details.
 public class IdeaResponseDto
 {
     public int Id { get; set; }
@@ -24,4 +23,12 @@ public class IdeaResponseDto
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
+
+    public double AverageOriginality { get; set; }
+
+    public double AverageFeasibility { get; set; }
+
+    public double AverageUsefulness { get; set; }
+
+    public int RatingCount { get; set; }
 }

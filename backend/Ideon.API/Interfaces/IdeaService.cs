@@ -23,6 +23,7 @@ public class IdeaService : IIdeaService
         return await _context.Ideas
             .Include(i => i.Author)
             .Include(i => i.Category)
+            .Include(i => i.Ratings)
             .Select(i => new IdeaResponseDto
             {
                 Id = i.Id,
@@ -34,7 +35,11 @@ public class IdeaService : IIdeaService
                 CategoryName = i.Category.Name,
                 LookingForBuilder = i.LookingForBuilder,
                 CreatedAt = i.CreatedAt,
-                UpdatedAt = i.UpdatedAt
+                UpdatedAt = i.UpdatedAt,
+                RatingCount = i.Ratings.Count,
+                AverageOriginality = i.Ratings.Any() ? i.Ratings.Average(r => r.Originality) : 0,
+                AverageFeasibility = i.Ratings.Any() ? i.Ratings.Average(r => r.Feasibility) : 0,
+                AverageUsefulness = i.Ratings.Any() ? i.Ratings.Average(r => r.Usefulness) : 0
             })
             .ToListAsync(); //convert to dto - The retrieved ideas are projected into IdeaResponseDto objects, which are then returned as a list.
     }
@@ -65,62 +70,62 @@ public class IdeaService : IIdeaService
     public async Task<IdeaResponseDto> CreateAsync(
     CreateIdeaDto dto,
     int authorId)
-{
-    var authorExists = await _context.Users
-        .AnyAsync(u => u.Id == authorId);
-
-    if (!authorExists)
     {
-        throw new ArgumentException("Authenticated user does not exist.");
+        var authorExists = await _context.Users
+            .AnyAsync(u => u.Id == authorId);
+
+        if (!authorExists)
+        {
+            throw new ArgumentException("Authenticated user does not exist.");
+        }
+
+        var categoryExists = await _context.Categories
+            .AnyAsync(c => c.Id == dto.CategoryId);
+
+        if (!categoryExists)
+        {
+            throw new ArgumentException("Category does not exist.");
+        }
+
+        var idea = new Idea
+        {
+            Title = dto.Title.Trim(),
+            Description = dto.Description.Trim(),
+            AuthorId = authorId,
+            CategoryId = dto.CategoryId,
+            LookingForBuilder = dto.LookingForBuilder,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.Ideas.Add(idea);
+        await _context.SaveChangesAsync();
+
+        return (await GetByIdAsync(idea.Id))!;
     }
-
-    var categoryExists = await _context.Categories
-        .AnyAsync(c => c.Id == dto.CategoryId);
-
-    if (!categoryExists)
-    {
-        throw new ArgumentException("Category does not exist.");
-    }
-
-    var idea = new Idea
-    {
-        Title = dto.Title.Trim(),
-        Description = dto.Description.Trim(),
-        AuthorId = authorId,
-        CategoryId = dto.CategoryId,
-        LookingForBuilder = dto.LookingForBuilder,
-        CreatedAt = DateTime.UtcNow,
-        UpdatedAt = DateTime.UtcNow
-    };
-
-    _context.Ideas.Add(idea);
-    await _context.SaveChangesAsync();
-
-    return (await GetByIdAsync(idea.Id))!;
-}
     // Updates an existing idea in the database based on the provided ID and UpdateIdeaDto object. If the idea is found, it updates its properties and returns the updated idea as an IdeaResponseDto object. If the idea is not found, it returns null.
     public async Task<IdeaResponseDto?> UpdateAsync(
     int id,
     UpdateIdeaDto dto)
-{
-    var idea = await _context.Ideas.FindAsync(id);
-
-    if (idea is null)
     {
-        return null;
+        var idea = await _context.Ideas.FindAsync(id);
+
+        if (idea is null)
+        {
+            return null;
+        }
+
+        idea.Title = dto.Title;
+        idea.Description = dto.Description;
+        idea.CategoryId = dto.CategoryId;
+        idea.LookingForBuilder = dto.LookingForBuilder;
+        idea.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return await GetByIdAsync(id);
     }
 
-    idea.Title = dto.Title;
-    idea.Description = dto.Description;
-    idea.CategoryId = dto.CategoryId;
-    idea.LookingForBuilder = dto.LookingForBuilder;
-    idea.UpdatedAt = DateTime.UtcNow;
-
-    await _context.SaveChangesAsync();
-
-    return await GetByIdAsync(id);
-}
-    
     // Deletes an existing idea from the database based on the provided ID. If the idea is found and deleted, it returns true; otherwise, it returns false.
     public async Task<bool> DeleteAsync(int id)
     {
