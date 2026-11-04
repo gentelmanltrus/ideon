@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createIdea, getCategories } from "../services/api";
+import "../styles/CreateIdea.css";
+
 //summary: This file contains the CreateIdea component, which allows users to create a new idea. It uses React hooks to manage state and side effects. The component fetches categories from the API when it mounts and displays a form for users to input the idea's title, description, category, and whether they are looking for a builder. Upon form submission, it sends a POST request to the API to create the idea and navigates to the newly created idea's page if successful. Error handling is implemented to provide feedback to the user in case of issues during fetching or submission.
 export default function CreateIdea() {
     const navigate = useNavigate();
@@ -63,51 +65,57 @@ export default function CreateIdea() {
     }
 
     if (loadingCategories) {
-        return <p>Loading categories...</p>;
+        return <p className="loading-state">Loading categories...</p>;
     }
 
     return (
-        <main>
-            <Link to="/">← Back to Home</Link>
+        <main className="create-idea-container">
+            <Link to="/" className="create-idea-back-link">← Back to Home</Link>
 
-            <h1>Create an idea</h1>
+            <h1 className="create-idea-title">Create an idea</h1>
 
-            <form onSubmit={handleSubmit}>
-                <label htmlFor="title">Title</label>
-                <input
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    maxLength={100}
-                    required
-                />
+            <form onSubmit={handleSubmit} className="create-idea-form">
+                <div className="create-idea-group">
+                    <label htmlFor="title">Title</label>
+                    <input
+                        id="title"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        maxLength={100}
+                        required
+                    />
+                </div>
 
-                <label htmlFor="description">Description</label>
-                <textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    maxLength={2000}
-                    required
-                />
+                <div className="create-idea-group">
+                    <label htmlFor="description">Description</label>
+                    <textarea
+                        id="description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        maxLength={2000}
+                        required
+                    />
+                </div>
 
-                <label htmlFor="category">Category</label>
-                <select
-                    id="category"
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                    required
-                >
-                    <option value="">Select a category</option>
+                <div className="create-idea-group">
+                    <label htmlFor="category">Category</label>
+                    <select
+                        id="category"
+                        value={categoryId}
+                        onChange={(e) => setCategoryId(e.target.value)}
+                        required
+                    >
+                        <option value="">Select a category</option>
 
-                    {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                            {category.name}
-                        </option>
-                    ))}
-                </select>
+                        {categories.map((category) => (
+                            <option key={category.id} value={category.id}>
+                                {category.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
 
-                <label>
+                <label className="checkbox-group">
                     <input
                         type="checkbox"
                         checked={lookingForBuilder}
@@ -118,9 +126,9 @@ export default function CreateIdea() {
                     Looking for a Builder
                 </label>
 
-                {error && <p role="alert">{error}</p>}
+                {error && <p className="create-idea-error" role="alert">{error}</p>}
 
-                <button type="submit" disabled={submitting}>
+                <button type="submit" disabled={submitting} className="create-idea-submit-btn">
                     {submitting ? "Creating..." : "Create idea"}
                 </button>
             </form>
