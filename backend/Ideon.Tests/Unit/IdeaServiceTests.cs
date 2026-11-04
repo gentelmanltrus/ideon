@@ -5,9 +5,7 @@ using Ideon.API.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ideon.Tests.Unit;
-/// <summary>
-/// Unit tests for the <see cref="IdeaService"/> class.
-/// </summary>
+/// Unit tests for the IdeaService class.
 //this class contains unit tests for the IdeaService class, which is responsible for managing ideas in the application. The tests cover various scenarios, including retrieving all ideas, getting an idea by ID, creating, updating, and deleting ideas. The tests use an in-memory database to simulate the application's data context.
 public class IdeaServiceTests
 {
