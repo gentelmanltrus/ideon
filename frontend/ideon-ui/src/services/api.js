@@ -126,6 +126,11 @@ export async function updateIdea(id, data) {
         body: JSON.stringify(data)
     });
 }
+export async function getPagedIdeas(page = 1, pageSize = 10) {
+    return request(
+        `/Ideas/paged?page=${page}&pageSize=${pageSize}`
+    );
+}
 
 export async function deleteIdea(id) {
     return request(`/ideas/${id}`, {
