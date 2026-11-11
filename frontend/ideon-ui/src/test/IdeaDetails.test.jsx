@@ -1,50 +1,66 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, vi } from 'vitest';
+import IdeaDetails from '../components/IdeaDetails.jsx';
 
-let IdeaDetails;
-// Try to import the IdeaDetails component from the expected paths
-try {
-  const module = require('../components/IdeaDetails');
-  IdeaDetails = module.default || module.IdeaDetails;
-} catch (error) {
-  try {
-    const module = require('../components/IdeaDetails/IdeaDetails');
-    IdeaDetails = module.default || module.IdeaDetails;
-  } catch (secondError) {
-    throw new Error(
-      'IdeaDetails component was not found. Expected it to be exported from ../components/IdeaDetails or ../components/IdeaDetails/IdeaDetails.'
-    );
-  }
-}
-//test file for the IdeaDetails component, which checks that the component renders correctly and displays the idea title, description, and metadata.
+vi.mock('../services/api', () => ({
+  createComment: vi.fn(),
+  getComments: vi.fn(),
+  getIdeaById: vi.fn(),
+  getToken: vi.fn(() => null),
+  createRating: vi.fn(),
+  getRatings: vi.fn(),
+  updateMyRating: vi.fn(),
+  createCollaborationRequest: vi.fn(),
+}));
+
+import { getComments, getIdeaById, getRatings } from '../services/api';
+
 describe('IdeaDetails', () => {
   const idea = {
     id: 1,
     title: 'Solar-powered city bikes',
     description: 'A sustainable transport idea to reduce emissions in dense urban areas.',
-    category: 'Sustainability',
-    status: 'In review',
-    author: 'Alice Johnson',
-    likes: 42,
+    categoryName: 'Sustainability',
+    authorUsername: 'Alice Johnson',
+    createdAt: '2024-01-01T12:00:00.000Z',
+    lookingForBuilder: false,
   };
 
-  it('renders the idea title and description', () => {
-    render(<IdeaDetails idea={idea} />);
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getIdeaById.mockResolvedValue(idea);
+    getComments.mockResolvedValue([]);
+    getRatings.mockResolvedValue([]);
+  });
 
-    expect(
-      screen.getByRole('heading', { name: /solar-powered city bikes/i })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/a sustainable transport idea to reduce emissions/i)
-    ).toBeInTheDocument();
+  function renderIdeaDetails() {
+    return render(
+      <MemoryRouter initialEntries={['/ideas/1']}>
+        <Routes>
+          <Route path="/ideas/:id" element={<IdeaDetails />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it('renders the idea title and description', () => {
+    renderIdeaDetails();
+
+    return waitFor(() => {
+      expect(screen.getByRole('heading', { name: /solar-powered city bikes/i })).toBeInTheDocument();
+      expect(screen.getByText(/a sustainable transport idea to reduce emissions/i)).toBeInTheDocument();
+    });
   });
 
   it('renders the idea metadata', () => {
-    render(<IdeaDetails idea={idea} />);
+    renderIdeaDetails();
 
-    expect(screen.getByText(/sustainability/i)).toBeInTheDocument();
-    expect(screen.getByText(/in review/i)).toBeInTheDocument();
-    expect(screen.getByText(/alice johnson/i)).toBeInTheDocument();
+    return waitFor(() => {
+      expect(screen.getByText('Sustainability')).toBeInTheDocument();
+      expect(screen.getByText('Alice Johnson')).toBeInTheDocument();
+    });
   });
 });
