@@ -1,5 +1,5 @@
 using Ideon.API.DTOs.Ideas;
-
+using Ideon.API.DTOs.Common;
 namespace Ideon.API.Services.Interfaces;
 // <summary>
 // Defines the contract for the idea service, which provides methods for managing ideas.
@@ -15,4 +15,8 @@ public interface IIdeaService
     Task<IdeaResponseDto?> UpdateAsync(int id, UpdateIdeaDto dto);
 
     Task<bool> DeleteAsync(int id);
+    Task<PagedResult<IdeaResponseDto>> GetPagedAsync(
+    int page,
+    int pageSize,
+    CancellationToken cancellationToken = default);
 }

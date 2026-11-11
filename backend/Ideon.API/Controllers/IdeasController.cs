@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 namespace Ideon.API.Controllers;
+using Ideon.API.DTOs.Common;
+
 // <summary>
 // The IdeasController class handles HTTP requests related to ideas, providing endpoints for CRUD operations.
 [ApiController]
@@ -23,6 +25,20 @@ public class IdeasController : ControllerBase
         var ideas = await _ideaService.GetAllAsync();
 
         return Ok(ideas);
+    }
+    // Retrieves a paginated list of ideas based on the specified page number and page size. It calls the GetPagedAsync method of the IIdeaService to fetch the paginated data and returns it as an HTTP response
+    [HttpGet("paged")]
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _ideaService.GetPagedAsync(
+            page,
+            pageSize,
+            cancellationToken);
+
+        return Ok(result);
     }
 
     [HttpGet("{id:int}")]
