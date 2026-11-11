@@ -7,7 +7,7 @@
 | IdeasController | TODO | TODO |
 | IdeaService | DONE | TODO |
 | CommentsController | TODO | TODO |
-| CommentService | TODO | TODO |
+| CommentService | DONE | TODO |
 | RatingsController | TODO | TODO |
 | RatingService | DONE | TODO |
 | CollaborationRequestsController | TODO | TODO |

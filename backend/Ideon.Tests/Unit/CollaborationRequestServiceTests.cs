@@ -4,9 +4,10 @@ using System.Reflection;
 using Xunit;
 
 namespace Ideon.Tests.Unit;
-
+/// Unit tests for the CollaborationRequestService class.
 public class CollaborationRequestServiceTests
-{
+{   
+    //fact attribute indicates that the method is a test method that should be executed by the test runner.
 	[Fact]
 	public void CollaborationRequestService_IsAvailable()
 	{
