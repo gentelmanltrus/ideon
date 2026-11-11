@@ -18,10 +18,10 @@
 | Component | Tests |
 | --- | --- |
 | MainPage | DONE |
-| IdeaDetails | TODO |
+| IdeaDetails | DONE |
 | IncomingRequests | TODO |
 | CreateIdea | TODO |
-| Login | TODO |
+| Login | DONE |
 
 ## Coverage
 
