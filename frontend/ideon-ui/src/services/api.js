@@ -186,3 +186,7 @@ export async function updateCollaborationRequestStatus(
         body: JSON.stringify({ status })
     });
 }
+
+export async function getUserProfile(username) {
+    return request(`/users/${username}`);
+}

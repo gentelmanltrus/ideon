@@ -70,7 +70,7 @@ export default function CreateIdea() {
 
     return (
         <main className="create-idea-container">
-            <Link to="/" className="create-idea-back-link">← Back to Home</Link>
+            <Link to="/main" className="create-idea-back-link">← Back to Ideas</Link>
 
             <h1 className="create-idea-title">Create an idea</h1>
 
