@@ -47,7 +47,7 @@ export default function LoginForm() {
             }
 
             saveAuth(auth);
-            navigate("/categories");
+            window.location.href = "/categories";
         } catch (err) {
             setError(err.message || "Authentication failed.");
         } finally {
