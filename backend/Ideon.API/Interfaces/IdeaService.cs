@@ -1,11 +1,11 @@
 using Ideon.API.Data;
 using Ideon.API.DTOs.Common;
 using Ideon.API.DTOs.Ideas;
+using Ideon.API.Exceptions;
 using Ideon.API.Extensions;
 using Ideon.API.Models;
 using Ideon.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-
 namespace Ideon.API.Services;
 
 // <summary>
@@ -144,7 +144,7 @@ public class IdeaService : IIdeaService
 
         if (idea is null)
         {
-            return null;
+            throw new IdeaNotFoundException(id);
         }
 
         idea.Title = dto.Title;
@@ -154,7 +154,7 @@ public class IdeaService : IIdeaService
         idea.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-
+        
         return await GetByIdAsync(id);
     }
 
@@ -165,7 +165,7 @@ public class IdeaService : IIdeaService
 
         if (idea is null)
         {
-            return false;
+            throw new IdeaNotFoundException(id);
         }
 
         _context.Ideas.Remove(idea);
