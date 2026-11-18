@@ -1,5 +1,7 @@
 using Ideon.API.Data;
+using Ideon.API.DTOs.Common;
 using Ideon.API.DTOs.Ideas;
+using Ideon.API.Extensions;
 using Ideon.API.Models;
 using Ideon.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +17,36 @@ public class IdeaService : IIdeaService
     public IdeaService(AppDbContext context)
     {
         _context = context; // context - The AppDbContext instance is injected into the IdeaService constructor, allowing it to interact with the database.
+    }
+    // Retrieves a paginated list of ideas from the database based on the specified page number and page size. It returns a PagedResult<IdeaResponseDto> containing the paginated items along with pagination metadata.
+    public async Task<PagedResult<IdeaResponseDto>> GetPagedAsync(
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {   
+        //returns a paginated list of ideas from the database, ordered by their ID in descending order, and projected into IdeaResponseDto objects. The query is executed asynchronously, and the result is returned as a PagedResult<IdeaResponseDto> containing the paginated items along with pagination metadata.
+        var query = _context.Ideas
+            .AsNoTracking()
+            .OrderByDescending(i => i.Id)
+            .Select(i => new IdeaResponseDto
+            {
+                Id = i.Id,
+                Title = i.Title,
+                Description = i.Description,
+                AuthorId = i.AuthorId,
+                AuthorUsername = i.Author.Username,
+                CategoryId = i.CategoryId,
+                CategoryName = i.Category.Name,
+                LookingForBuilder = i.LookingForBuilder,
+                CreatedAt = i.CreatedAt,
+                UpdatedAt = i.UpdatedAt,
+                RatingCount = i.Ratings.Count,
+                AverageOriginality = i.Ratings.Any() ? i.Ratings.Average(r => r.Originality) : 0,
+                AverageFeasibility = i.Ratings.Any() ? i.Ratings.Average(r => r.Feasibility) : 0,
+                AverageUsefulness = i.Ratings.Any() ? i.Ratings.Average(r => r.Usefulness) : 0
+            });
+
+        return await query.ToPagedResultAsync(page, pageSize, cancellationToken);// The query is executed asynchronously, and the result is returned as a PagedResult<IdeaResponseDto> containing the paginated items along with pagination metadata.
     }
 
     // Retrieves all ideas from the database and returns them as a collection of IdeaResponseDto objects
