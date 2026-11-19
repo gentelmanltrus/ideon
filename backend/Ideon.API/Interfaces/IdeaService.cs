@@ -1,7 +1,6 @@
 using Ideon.API.Data;
 using Ideon.API.DTOs.Common;
 using Ideon.API.DTOs.Ideas;
-using Ideon.API.Exceptions;
 using Ideon.API.Extensions;
 using Ideon.API.Models;
 using Ideon.API.Services.Interfaces;
@@ -144,7 +143,7 @@ public class IdeaService : IIdeaService
 
         if (idea is null)
         {
-            throw new IdeaNotFoundException(id);
+            return null;
         }
 
         idea.Title = dto.Title;
@@ -165,7 +164,7 @@ public class IdeaService : IIdeaService
 
         if (idea is null)
         {
-            throw new IdeaNotFoundException(id);
+            return false;
         }
 
         _context.Ideas.Remove(idea);
