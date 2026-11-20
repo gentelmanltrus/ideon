@@ -5,7 +5,6 @@ using Ideon.API.Extensions;
 using Ideon.API.Models;
 using Ideon.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-
 namespace Ideon.API.Services;
 
 // <summary>
@@ -154,7 +153,7 @@ public class IdeaService : IIdeaService
         idea.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-
+        
         return await GetByIdAsync(id);
     }
 

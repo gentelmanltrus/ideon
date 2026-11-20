@@ -50,6 +50,18 @@ async function request(path, options = {}) {
         return null;
     }
 
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+
+        if (response.status === 401) {
+            clearAuth();
+        }
+
+        throw new Error(
+            errorData?.message || "Something went wrong."
+        );
+    }
+
     const text = await response.text();
 
     let data = null;
@@ -60,20 +72,6 @@ async function request(path, options = {}) {
         } catch {
             data = text;
         }
-    }
-
-    if (!response.ok) {
-        const message =
-            data?.message ||
-            data?.title ||
-            (typeof data === "string" ? data : null) ||
-            `Request failed: ${response.status}`;
-
-        if (response.status === 401) {
-            clearAuth();
-        }
-
-        throw new Error(message);
     }
 
     return data;
