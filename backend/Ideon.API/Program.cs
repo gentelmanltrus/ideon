@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Ideon.API.Services;
 using Ideon.API.Interfaces;
 using Ideon.API.Services.Interfaces;
+using Ideon.API.Middleware;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -74,6 +75,8 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseCors("Frontend");// Use the configured CORS policy for incoming requests, allowing requests from the specified frontend origin.
 // Enable authentication and authorization middleware in the request pipeline, allowing the application to handle authentication and authorization for incoming requests.
