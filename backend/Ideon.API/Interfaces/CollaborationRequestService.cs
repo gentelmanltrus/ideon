@@ -1,18 +1,23 @@
 using Ideon.API.Data;
 using Ideon.API.DTOs.CollaborationRequests;
+using Ideon.API.Exceptions;
 using Ideon.API.Models;
 using Ideon.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ideon.API.Services;
-/// <summary> Implements the ICollaborationRequestService interface, providing methods for managing collaboration requests in the application.
+///  Implements the ICollaborationRequestService interface, providing methods for managing collaboration requests in the application.
 public class CollaborationRequestService : ICollaborationRequestService
 {
     private readonly AppDbContext _context;
+    private readonly CollaborationRequestProcessingGuard _guard;
 
-    public CollaborationRequestService(AppDbContext context)
+    public CollaborationRequestService(
+        AppDbContext context,
+        CollaborationRequestProcessingGuard guard)
     {
         _context = context;
+        _guard = guard;
     }
 
     public async Task<(
@@ -134,47 +139,61 @@ public async Task<(
         return (null, "invalid_status");
     }
 
-    var request = await _context.CollaborationRequests
-        .Include(r => r.Idea)
-        .FirstOrDefaultAsync(r => r.Id == requestId);
-
-    if (request is null)
+    if (!_guard.TryEnter(requestId))
     {
-        return (null, "request_not_found");
+        throw new CollaborationRequestConflictException(
+            "This collaboration request is already being processed."
+        );
     }
 
-    // Only the author of the idea can decide on the request.
-    if (request.Idea.AuthorId != authorId)
+    try
     {
-        return (null, "forbidden");
-    }
+        var request = await _context.CollaborationRequests
+            .Include(r => r.Idea)
+            .FirstOrDefaultAsync(r => r.Id == requestId);
 
-    // A processed request cannot be changed again.
-    if (request.Status != "Pending")
-    {
-        return (null, "already_processed");
-    }
-
-    request.Status = normalizedStatus;
-
-    await _context.SaveChangesAsync();
-
-    var response = await _context.CollaborationRequests
-        .AsNoTracking()
-        .Where(r => r.Id == requestId)
-        .Select(r => new CollaborationRequestResponseDto
+        if (request is null)
         {
-            Id = r.Id,
-            IdeaId = r.IdeaId,
-            IdeaTitle = r.Idea.Title,
-            UserId = r.UserId,
-            Username = r.User.Username,
-            Status = r.Status,
-            CreatedAt = r.CreatedAt
-        })
-        .FirstAsync();
+            return (null, "request_not_found");
+        }
 
-    return (response, null);
+        // Only the author of the idea can decide on the request.
+        if (request.Idea.AuthorId != authorId)
+        {
+            return (null, "forbidden");
+        }
+
+        // A processed request cannot be changed again.
+        if (request.Status != "Pending")
+        {
+            return (null, "already_processed");
+        }
+
+        request.Status = normalizedStatus;
+
+        await _context.SaveChangesAsync();
+
+        var response = await _context.CollaborationRequests
+            .AsNoTracking()
+            .Where(r => r.Id == requestId)
+            .Select(r => new CollaborationRequestResponseDto
+            {
+                Id = r.Id,
+                IdeaId = r.IdeaId,
+                IdeaTitle = r.Idea.Title,
+                UserId = r.UserId,
+                Username = r.User.Username,
+                Status = r.Status,
+                CreatedAt = r.CreatedAt
+            })
+            .FirstAsync();
+
+        return (response, null);
+    }
+    finally
+    {
+        _guard.Exit(requestId);
+    }
 }
 
 }

@@ -12,6 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 // controller services are added to the dependency injection container, allowing them to be discovered and used by the application.
 builder.Services.AddControllers();
+// Add collaboration request processing guard as a singleton service to the dependency injection container, allowing it to be injected into controllers and other services that require it. This ensures that only one instance of the guard is created and shared across the application.
+builder.Services.AddSingleton<CollaborationRequestProcessingGuard>();
 // Add collaboration request service to the dependency injection container, allowing it to be injected into controllers and other services that require it.
 builder.Services.AddScoped<
     ICollaborationRequestService,
