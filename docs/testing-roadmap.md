@@ -10,7 +10,7 @@
 | CommentService | DONE | TODO |
 | RatingsController | TODO | TODO |
 | RatingService | DONE | TODO |
-| CollaborationRequestsController | TODO | TODO |
+| CollaborationRequestsController | DONE | TODO |
 | CollaborationRequestService | DONE | TODO |
 
 ## Frontend
