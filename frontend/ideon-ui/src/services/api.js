@@ -124,10 +124,25 @@ export async function updateIdea(id, data) {
         body: JSON.stringify(data)
     });
 }
-export async function getPagedIdeas(page = 1, pageSize = 10) {
-    return request(
-        `/Ideas/paged?page=${page}&pageSize=${pageSize}`
-    );
+export async function getPagedIdeas(page = 1, pageSize = 10, filters = {}) {
+    const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize)
+    });
+
+    if (filters.search) {
+        params.set("search", filters.search);
+    }
+
+    if (filters.categoryId !== null && filters.categoryId !== undefined) {
+        params.set("categoryId", String(filters.categoryId));
+    }
+
+    if (filters.sortBy) {
+        params.set("sortBy", filters.sortBy);
+    }
+
+    return request(`/ideas/paged?${params.toString()}`);
 }
 
 export async function deleteIdea(id) {

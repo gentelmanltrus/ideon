@@ -21,31 +21,57 @@ public class IdeaService : IIdeaService
     public async Task<PagedResult<IdeaResponseDto>> GetPagedAsync(
         int page,
         int pageSize,
-        CancellationToken cancellationToken = default)
-    {   
-        //returns a paginated list of ideas from the database, ordered by their ID in descending order, and projected into IdeaResponseDto objects. The query is executed asynchronously, and the result is returned as a PagedResult<IdeaResponseDto> containing the paginated items along with pagination metadata.
+        CancellationToken cancellationToken = default,
+        int? categoryId = null,
+        string? search = null,
+        string sortBy = "newest")
+    {
         var query = _context.Ideas
             .AsNoTracking()
-            .OrderByDescending(i => i.Id)
-            .Select(i => new IdeaResponseDto
-            {
-                Id = i.Id,
-                Title = i.Title,
-                Description = i.Description,
-                AuthorId = i.AuthorId,
-                AuthorUsername = i.Author.Username,
-                CategoryId = i.CategoryId,
-                CategoryName = i.Category.Name,
-                LookingForBuilder = i.LookingForBuilder,
-                CreatedAt = i.CreatedAt,
-                UpdatedAt = i.UpdatedAt,
-                RatingCount = i.Ratings.Count,
-                AverageOriginality = i.Ratings.Any() ? i.Ratings.Average(r => r.Originality) : 0,
-                AverageFeasibility = i.Ratings.Any() ? i.Ratings.Average(r => r.Feasibility) : 0,
-                AverageUsefulness = i.Ratings.Any() ? i.Ratings.Average(r => r.Usefulness) : 0
-            });
+            .AsQueryable();
 
-        return await query.ToPagedResultAsync(page, pageSize, cancellationToken);// The query is executed asynchronously, and the result is returned as a PagedResult<IdeaResponseDto> containing the paginated items along with pagination metadata.
+        if (categoryId.HasValue)
+        {
+            query = query.Where(i => i.CategoryId == categoryId.Value);
+        }
+
+        var normalizedSearch = search?.Trim().ToLower();
+        if (!string.IsNullOrEmpty(normalizedSearch))
+        {
+            query = query.Where(i =>
+                i.Title.ToLower().Contains(normalizedSearch) ||
+                i.Description.ToLower().Contains(normalizedSearch) ||
+                i.Author.Username.ToLower().Contains(normalizedSearch) ||
+                i.Category.Name.ToLower().Contains(normalizedSearch));
+        }
+
+        query = sortBy switch
+        {
+            "oldest" => query.OrderBy(i => i.CreatedAt).ThenBy(i => i.Id),
+            "title" => query.OrderBy(i => i.Title).ThenBy(i => i.Id),
+            "newest" => query.OrderByDescending(i => i.CreatedAt).ThenByDescending(i => i.Id),
+            _ => throw new ArgumentOutOfRangeException(nameof(sortBy), "Unsupported sort order.")
+        };
+
+        var projectedQuery = query.Select(i => new IdeaResponseDto
+        {
+            Id = i.Id,
+            Title = i.Title,
+            Description = i.Description,
+            AuthorId = i.AuthorId,
+            AuthorUsername = i.Author.Username,
+            CategoryId = i.CategoryId,
+            CategoryName = i.Category.Name,
+            LookingForBuilder = i.LookingForBuilder,
+            CreatedAt = i.CreatedAt,
+            UpdatedAt = i.UpdatedAt,
+            RatingCount = i.Ratings.Count,
+            AverageOriginality = i.Ratings.Any() ? i.Ratings.Average(r => r.Originality) : 0,
+            AverageFeasibility = i.Ratings.Any() ? i.Ratings.Average(r => r.Feasibility) : 0,
+            AverageUsefulness = i.Ratings.Any() ? i.Ratings.Average(r => r.Usefulness) : 0
+        });
+
+        return await projectedQuery.ToPagedResultAsync(page, pageSize, cancellationToken);
     }
 
     // Retrieves all ideas from the database and returns them as a collection of IdeaResponseDto objects

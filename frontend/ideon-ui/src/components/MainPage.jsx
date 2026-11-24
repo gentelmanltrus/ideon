@@ -1,21 +1,43 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { getIdeas } from "../services/api";
+import { getPagedIdeas } from "../services/api";
 import "../styles/MainPage.css";
 //this is the main page of the application, which displays a list of ideas and allows users to search and sort them. It also handles loading and error states.
 export default function MainPage() {
     const [searchParams] = useSearchParams();
     const categoryParam = searchParams.get("category");
     //usestate hooks to manage the state of ideas, search query, sorting option, loading state, and error message.
-    const [ideas, setIdeas] = useState([]);
+    const [pagedResult, setPagedResult] = useState({
+        items: [],
+        totalCount: 0,
+        totalPages: 0
+    });
     const [search, setSearch] = useState("");
     const [sortBy, setSortBy] = useState("newest");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [page, setPage] = useState(1);
+    const [pageState, setPageState] = useState({
+        categoryParam,
+        page: 1
+    });
+    const page = pageState.categoryParam === categoryParam
+        ? pageState.page
+        : 1;
+    const setPage = (nextPage) => {
+        setPageState((currentState) => {
+            const currentPage = currentState.categoryParam === categoryParam
+                ? currentState.page
+                : 1;
+
+            return {
+                categoryParam,
+                page: typeof nextPage === "function"
+                    ? nextPage(currentPage)
+                    : nextPage
+            };
+        });
+    };
     const [pageSize] = useState(10);
-    const [totalPages, setTotalPages] = useState(0);
-    const [totalCount, setTotalCount] = useState(0);    
     useEffect(() => {
         let cancelled = false;
 
@@ -24,10 +46,17 @@ export default function MainPage() {
             setError("");
 
             try {
-                const data = await getIdeas();
+                const categoryId = categoryParam
+                    ? Number(categoryParam)
+                    : null;
+                const data = await getPagedIdeas(page, pageSize, {
+                    search,
+                    categoryId,
+                    sortBy
+                });
 
                 if (!cancelled) {
-                    setIdeas(data);
+                    setPagedResult(data);
                 }
             } catch (err) {
                 if (!cancelled) {
@@ -45,80 +74,8 @@ export default function MainPage() {
         return () => {
             cancelled = true;
         };
-    }, []);
-    //useMemo hook to compute the visible ideas based on the current search query, selected category, and sorting option. It filters and sorts the ideas accordingly.
-    //filter() - The filter() method creates a new array with all elements that pass the test implemented by the provided function. In this case, it filters the ideas based on the search query and selected category.
-    const visibleIdeas = useMemo(() => {
-        const normalizedSearch = search.trim().toLowerCase();
-
-        let result = ideas.filter((idea) => {
-            if (categoryParam) {
-                const categoryId = Number(categoryParam);
-
-                if (
-                    !Number.isInteger(categoryId) ||
-                    idea.categoryId !== categoryId
-                ) {
-                    return false;
-                }
-            }
-
-            const searchableText = [
-                idea.title,
-                idea.description,
-                idea.authorUsername,
-                idea.categoryName
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-
-            return searchableText.includes(normalizedSearch);
-        });
-
-        result = [...result];
-        //sort() - The sort() method sorts the elements of an array in place and returns the sorted array. In this case, it sorts the filtered ideas based on the selected sorting option (newest, oldest, or title).
-        if (sortBy === "newest") {
-            result.sort(
-                (a, b) =>
-                    new Date(b.createdAt).getTime() -
-                    new Date(a.createdAt).getTime()
-            );
-        } else if (sortBy === "oldest") {
-            result.sort(
-                (a, b) =>
-                    new Date(a.createdAt).getTime() -
-                    new Date(b.createdAt).getTime()
-            );
-        } else if (sortBy === "title") {
-            result.sort((a, b) =>
-                a.title.localeCompare(b.title)
-            );
-        }
-
-        return result;
-    }, [ideas, categoryParam, search, sortBy]);
-
-    const getPagedIdeas = (currentPage, currentPageSize) => {
-        const startIndex = (currentPage - 1) * currentPageSize;
-        return visibleIdeas.slice(startIndex, startIndex + currentPageSize);
-    };
-
-    const pagedIdeas = useMemo(
-        () => getPagedIdeas(page, pageSize),
-        [page, pageSize, visibleIdeas]
-    );
-
-    useEffect(() => {
-        const count = visibleIdeas.length;
-        const pages = Math.ceil(count / pageSize);
-
-        setTotalCount(count);
-        setTotalPages(pages);
-        setPage((currentPage) =>
-            Math.min(currentPage, Math.max(1, pages))
-        );
-    }, [visibleIdeas, pageSize]);
+    }, [page, pageSize, search, sortBy, categoryParam]);
+    const visibleIdeas = pagedResult.items;
 
     if (loading) {
         return (
@@ -184,7 +141,10 @@ export default function MainPage() {
                         id="idea-search"
                         type="search"
                         value={search}
-                        onChange={(event) => setSearch(event.target.value)}
+                        onChange={(event) => {
+                            setSearch(event.target.value);
+                            setPage(1);
+                        }}
                         placeholder="Title, description, author…"
                     />
                 </div>
@@ -194,7 +154,10 @@ export default function MainPage() {
                     <select
                         id="idea-sort"
                         value={sortBy}
-                        onChange={(event) => setSortBy(event.target.value)}
+                        onChange={(event) => {
+                            setSortBy(event.target.value);
+                            setPage(1);
+                        }}
                     >
                         <option value="newest">Newest first</option>
                         <option value="oldest">Oldest first</option>
@@ -208,8 +171,8 @@ export default function MainPage() {
                     {categoryParam ? "Ideas in this category" : "Explore ideas"}
                 </h2>
                 <span className="muted">
-                    {visibleIdeas.length}{" "}
-                    {visibleIdeas.length === 1 ? "idea" : "ideas"}
+                    {pagedResult.totalCount}{" "}
+                    {pagedResult.totalCount === 1 ? "idea" : "ideas"}
                 </span>
             </div>
 
@@ -231,7 +194,7 @@ export default function MainPage() {
                         )}
                     </div>
                 ) : (
-                    pagedIdeas.map((idea) => (
+                    visibleIdeas.map((idea) => (
                         <article key={idea.id} className="idea-card">
                             <div className="idea-author-row">
                                 <div className="author-avatar" aria-hidden="true">
@@ -318,6 +281,30 @@ export default function MainPage() {
                     ))
                 )}
             </section>
+
+            {pagedResult.totalPages > 1 && (
+                <nav className="pagination" aria-label="Ideas pagination">
+                    <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => setPage((currentPage) => currentPage - 1)}
+                        disabled={page <= 1}
+                    >
+                        Previous
+                    </button>
+                    <span className="muted">
+                        Page {page} of {pagedResult.totalPages}
+                    </span>
+                    <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => setPage((currentPage) => currentPage + 1)}
+                        disabled={page >= pagedResult.totalPages}
+                    >
+                        Next
+                    </button>
+                </nav>
+            )}
         </main>
     );
 }
