@@ -50,6 +50,18 @@ async function request(path, options = {}) {
         return null;
     }
 
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+
+        if (response.status === 401) {
+            clearAuth();
+        }
+
+        throw new Error(
+            errorData?.message || "Something went wrong."
+        );
+    }
+
     const text = await response.text();
 
     let data = null;
@@ -60,20 +72,6 @@ async function request(path, options = {}) {
         } catch {
             data = text;
         }
-    }
-
-    if (!response.ok) {
-        const message =
-            data?.message ||
-            data?.title ||
-            (typeof data === "string" ? data : null) ||
-            `Request failed: ${response.status}`;
-
-        if (response.status === 401) {
-            clearAuth();
-        }
-
-        throw new Error(message);
     }
 
     return data;
@@ -125,6 +123,11 @@ export async function updateIdea(id, data) {
         method: "PUT",
         body: JSON.stringify(data)
     });
+}
+export async function getPagedIdeas(page = 1, pageSize = 10) {
+    return request(
+        `/Ideas/paged?page=${page}&pageSize=${pageSize}`
+    );
 }
 
 export async function deleteIdea(id) {
@@ -185,4 +188,8 @@ export async function updateCollaborationRequestStatus(
         method: "PATCH",
         body: JSON.stringify({ status })
     });
+}
+
+export async function getUserProfile(username) {
+    return request(`/users/${username}`);
 }

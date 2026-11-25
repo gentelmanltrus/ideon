@@ -101,3 +101,19 @@
 * [ ] Add screenshots
 * [ ] Perform final testing
 * [ ] Prepare project presentation
+
+## Collaboration requests
+* Users can submit a collaboration request for an idea that is looking for a builder.
+* Users cannot request collaboration on their own ideas.
+* Duplicate requests for the same idea are rejected.
+* Idea authors can view incoming requests.
+* Idea authors can accept or reject pending requests.
+* Only the author of the associated idea can change a request status.
+* Processed requests cannot be changed again.
+
+* Idea discovery
+* Ideas are loaded from the backend API.
+* Users can filter ideas by category.
+* Users can search by title, description, author, and category.
+* Users can sort ideas by creation date or title.
+* Empty, loading, and error states are displayed.

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Ideon.API.Services;
 using Ideon.API.Interfaces;
 using Ideon.API.Services.Interfaces;
+using Ideon.API.Middleware;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -11,6 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 // controller services are added to the dependency injection container, allowing them to be discovered and used by the application.
 builder.Services.AddControllers();
+// Add collaboration request processing guard as a singleton service to the dependency injection container, allowing it to be injected into controllers and other services that require it. This ensures that only one instance of the guard is created and shared across the application.
+builder.Services.AddSingleton<CollaborationRequestProcessingGuard>();
 // Add collaboration request service to the dependency injection container, allowing it to be injected into controllers and other services that require it.
 builder.Services.AddScoped<
     ICollaborationRequestService,
@@ -74,6 +77,8 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseCors("Frontend");// Use the configured CORS policy for incoming requests, allowing requests from the specified frontend origin.
 // Enable authentication and authorization middleware in the request pipeline, allowing the application to handle authentication and authorization for incoming requests.

@@ -12,7 +12,10 @@ export default function MainPage() {
     const [sortBy, setSortBy] = useState("newest");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-
+    const [page, setPage] = useState(1);
+    const [pageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalCount, setTotalCount] = useState(0);    
     useEffect(() => {
         let cancelled = false;
 
@@ -95,6 +98,27 @@ export default function MainPage() {
 
         return result;
     }, [ideas, categoryParam, search, sortBy]);
+
+    const getPagedIdeas = (currentPage, currentPageSize) => {
+        const startIndex = (currentPage - 1) * currentPageSize;
+        return visibleIdeas.slice(startIndex, startIndex + currentPageSize);
+    };
+
+    const pagedIdeas = useMemo(
+        () => getPagedIdeas(page, pageSize),
+        [page, pageSize, visibleIdeas]
+    );
+
+    useEffect(() => {
+        const count = visibleIdeas.length;
+        const pages = Math.ceil(count / pageSize);
+
+        setTotalCount(count);
+        setTotalPages(pages);
+        setPage((currentPage) =>
+            Math.min(currentPage, Math.max(1, pages))
+        );
+    }, [visibleIdeas, pageSize]);
 
     if (loading) {
         return (
@@ -207,7 +231,7 @@ export default function MainPage() {
                         )}
                     </div>
                 ) : (
-                    visibleIdeas.map((idea) => (
+                    pagedIdeas.map((idea) => (
                         <article key={idea.id} className="idea-card">
                             <div className="idea-author-row">
                                 <div className="author-avatar" aria-hidden="true">
@@ -250,6 +274,37 @@ export default function MainPage() {
                                     Looking for a collaborator
                                 </p>
                             )}
+
+                            {/* --- Aggregate Ratings Section --- */}
+                            <div className="idea-card-ratings">
+                                <div className="rating-pill">
+                                    <span>Originality</span>
+                                    <strong>
+                                        {idea.ratingCount > 0
+                                            ? Number(idea.averageOriginality).toFixed(1)
+                                            : "-"}
+                                    </strong>
+                                </div>
+                                <div className="rating-pill">
+                                    <span>Feasibility</span>
+                                    <strong>
+                                        {idea.ratingCount > 0
+                                            ? Number(idea.averageFeasibility).toFixed(1)
+                                            : "-"}
+                                    </strong>
+                                </div>
+                                <div className="rating-pill">
+                                    <span>Usefulness</span>
+                                    <strong>
+                                        {idea.ratingCount > 0
+                                            ? Number(idea.averageUsefulness).toFixed(1)
+                                            : "-"}
+                                    </strong>
+                                </div>
+                                <span className="rating-count-text">
+                                    ({idea.ratingCount || 0} {idea.ratingCount === 1 ? "vote" : "votes"})
+                                </span>
+                            </div>
 
                             <div className="idea-card-footer">
                                 <Link
