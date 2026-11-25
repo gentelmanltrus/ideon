@@ -1,18 +1,21 @@
 using System.Collections.Concurrent;
 
 namespace Ideon.API.Services;
-// This class is used to prevent concurrent processing of the same collaboration request. It maintains a thread-safe collection of request IDs that are currently being processed. When a request is being processed, its ID is added to the collection, and when processing is complete, the ID is removed. This ensures that only one thread can process a specific request at a time.
+// Prevents concurrent processing of the same collaboration request by threads in this application process.
+// The dictionary is shared memory within the process: callers using this guard instance see the same entries.
+// It is not shared across separate processes, containers, or machines, so it cannot coordinate multiple
+// service instances; that requires a distributed lock or another shared coordination store.
 public class CollaborationRequestProcessingGuard
 {
-    private readonly ConcurrentDictionary<int, byte> _processing = new(); // A thread-safe collection to track currently processing request IDs.
+    private readonly ConcurrentDictionary<int, byte> _processing = new();
 
-    // This method attempts to enter the processing state for a specific request ID. If the request ID is not already being processed, it adds the ID to the collection and returns true. If the request ID is already being processed, it returns false.
+    // TryAdd is atomic: only the first thread to add this request ID succeeds.
     public bool TryEnter(int requestId)
     {
         return _processing.TryAdd(requestId, 0);
     }
 
-    // This method removes a request ID from the processing collection, indicating that the request is no longer being processed.
+    // Call when processing finishes so a later thread can enter for this request ID.
     public void Exit(int requestId)
     {
         _processing.TryRemove(requestId, out _);

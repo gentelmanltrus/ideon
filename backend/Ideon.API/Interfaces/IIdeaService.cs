@@ -18,5 +18,8 @@ public interface IIdeaService
     Task<PagedResult<IdeaResponseDto>> GetPagedAsync(
     int page,
     int pageSize,
-    CancellationToken cancellationToken = default);
+    CancellationToken cancellationToken = default,
+    int? categoryId = null,
+    string? search = null,
+    string sortBy = "newest");
 }

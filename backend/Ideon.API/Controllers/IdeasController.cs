@@ -31,12 +31,18 @@ public class IdeasController : ControllerBase
     public async Task<IActionResult> GetPaged(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
+        [FromQuery] int? categoryId = null,
+        [FromQuery] string? search = null,
+        [FromQuery] string sortBy = "newest",
         CancellationToken cancellationToken = default)
     {
         var result = await _ideaService.GetPagedAsync(
             page,
             pageSize,
-            cancellationToken);
+            cancellationToken,
+            categoryId,
+            search,
+            sortBy);
 
         return Ok(result);
     }
