@@ -15,6 +15,7 @@ export default function MainPage() {
     const [search, setSearch] = useState("");
     const [sortBy, setSortBy] = useState("newest");
     const [loading, setLoading] = useState(true);
+    const [hasLoaded, setHasLoaded] = useState(false);
     const [error, setError] = useState("");
     const [pageState, setPageState] = useState({
         categoryParam,
@@ -57,10 +58,12 @@ export default function MainPage() {
 
                 if (!cancelled) {
                     setPagedResult(data);
+                    setHasLoaded(true);
                 }
             } catch (err) {
                 if (!cancelled) {
                     setError(err.message || "Could not load ideas.");
+                    setHasLoaded(true);
                 }
             } finally {
                 if (!cancelled) {
@@ -77,7 +80,7 @@ export default function MainPage() {
     }, [page, pageSize, search, sortBy, categoryParam]);
     const visibleIdeas = pagedResult.items;
 
-    if (loading) {
+    if (loading && !hasLoaded) {
         return (
             <main className="feed-container">
                 <p className="status-message">Loading ideas…</p>
